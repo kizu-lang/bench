@@ -1,0 +1,67 @@
+import std::mem;
+import std::process;
+
+struct Node {
+    left: ?mem::Box<Node>,
+    right: ?mem::Box<Node>,
+}
+
+fn (self: Node) deinit(allocator: Allocator) -> void {
+    if self.left |l| {
+        l.deinit(allocator);
+    }
+    if self.right |r| {
+        r.deinit(allocator);
+    }
+    return;
+}
+
+fn make(allocator: Allocator, depth: i64) -> !Node {
+    if depth == 0 {
+        return Node { left: null, right: null };
+    }
+    let l = try make(allocator, depth - 1);
+    let lb = try mem::box<Node>(allocator, move l);
+    errdefer lb.deinit(allocator);
+    let r = try make(allocator, depth - 1);
+    let rb = try mem::box<Node>(allocator, move r);
+    return Node { left: move lb, right: move rb };
+}
+
+fn check(node: &Node) -> i64 {
+    var total = 1;
+    if node.left |l| {
+        let lb = l.borrow();
+        total = total + check(lb);
+    }
+    if node.right |r| {
+        let rb = r.borrow();
+        total = total + check(rb);
+    }
+    return total;
+}
+
+fn main() -> !void {
+    let allocator = mem::page_allocator();
+    let max = 18 + process::arg_count();
+    let stretch = try make(allocator, max + 1);
+    var total = check(&stretch);
+    stretch.deinit(allocator);
+    let long_lived = try make(allocator, max);
+    defer long_lived.deinit(allocator);
+    var depth = 4;
+    while depth <= max {
+        let iterations = 1 << (max - depth + 4);
+        var i = 0;
+        while i < iterations {
+            let t = try make(allocator, depth);
+            defer t.deinit(allocator);
+            total = total + check(&t);
+            i = i + 1;
+        }
+        depth = depth + 2;
+    }
+    total = total + check(&long_lived);
+    print(total);
+    return;
+}

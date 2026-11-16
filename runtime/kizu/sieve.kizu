@@ -1,0 +1,37 @@
+import std::process;
+
+fn sieve(flags: &var [2000000]bool) -> i64 {
+    for 0..2000000 |i| {
+        flags[i] = true;
+    }
+    flags[0] = false;
+    flags[1] = false;
+    var p = 2;
+    while p * p < 2000000 {
+        if flags[p] {
+            var m = p * p;
+            while m < 2000000 {
+                flags[m] = false;
+                m = m + p;
+            }
+        }
+        p = p + 1;
+    }
+    var count = 0;
+    for 0..2000000 |i| {
+        if flags[i] {
+            count = count + 1;
+        }
+    }
+    return count;
+}
+
+fn main() -> void {
+    var flags = [2000000]bool{};
+    var total = 0;
+    for 0..(300 + process::arg_count()) |r| {
+        total = total + sieve(&var flags);
+    }
+    print(total);
+    return;
+}

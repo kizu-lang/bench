@@ -1,0 +1,23 @@
+import std::process;
+
+fn main() -> void {
+    var total = 0;
+    var n = 1;
+    let limit = 6000000 + process::arg_count();
+    while n < limit {
+        var x = n;
+        var steps = 0;
+        while x != 1 {
+            if x % 2 == 0 {
+                x = x / 2;
+            } else {
+                x = 3 * x + 1;
+            }
+            steps = steps + 1;
+        }
+        total = total + steps;
+        n = n + 1;
+    }
+    print(total);
+    return;
+}

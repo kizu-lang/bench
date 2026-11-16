@@ -1,0 +1,32 @@
+import std::process;
+
+fn matmul(a: &[40000]f64, b: &[40000]f64, c: &var [40000]f64) -> void {
+    for 0..200 |i| {
+        for 0..200 |j| {
+            var sum = 0.0;
+            for 0..200 |k| {
+                sum = sum + a[i * 200 + k] * b[k * 200 + j];
+            }
+            c[i * 200 + j] = sum;
+        }
+    }
+    return;
+}
+
+fn main() -> void {
+    var a = [40000]f64{};
+    var b = [40000]f64{};
+    var c = [40000]f64{};
+    for 0..40000 |i| {
+        a[i] = cast<f64>(i % 7) * 0.5;
+        b[i] = cast<f64>(i % 5) * 0.25;
+    }
+    var total = 0.0;
+    for 0..(150 + process::arg_count()) |r| {
+        a[r] = a[r] + 1.0;
+        matmul(&a, &b, &var c);
+        total = total + c[(r % 40) * 1000 + r % 200];
+    }
+    print(cast<i64>(total));
+    return;
+}
