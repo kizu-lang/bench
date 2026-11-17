@@ -20,7 +20,8 @@ Kizu の compiler と、それが出すコードの速さを Go・Zig・C と比
   答えを事前に計算できない。1 回の実行は 0.3〜1 秒で、起動時間は誤差になる。
 - **安全検査の差を並べる。** Kizu と Go は配列の範囲を検査する。比較のために範囲検査を切った Go
   (`-gcflags=-B`)、検査ありの Zig(ReleaseSafe)となしの Zig(ReleaseFast)、C の `-O2` と
-  `-O3 -march=native` を並べる。整数の overflow は Kizu・Go・C が wrap、Zig ReleaseSafe が trap。
+  `-O3 -march=native` を並べる。host の CPU に合わせるのは最後の 1 つだけで、他は汎用の命令で
+  build する(Zig は既定で host に合わせるので `-mcpu=baseline` を渡す)。整数の overflow は Kizu・Go・C が wrap、Zig ReleaseSafe が trap。
 - **メモリ確保は各言語の標準で。** binarytrees は 1 node ずつ確保する: Kizu は `mem::Box`
   (malloc)、C は malloc/free、Zig は `c_allocator`、Go は GC。
 - **負荷の偏りを避ける。** 時間は 1 コアに固定し(Linux の `taskset`)、言語の順番を round ごとに

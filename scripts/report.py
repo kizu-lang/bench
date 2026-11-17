@@ -33,7 +33,7 @@ def runtime(rd):
     print("中央値(秒)。括弧は C -O2 に対する比。最後の列は 6 本の比の幾何平均。\n")
     print("| | " + " | ".join(PROGRAMS) + " | 幾何平均 |")
     print("|---|" + "---|" * (len(PROGRAMS) + 1))
-    for v in VARIANTS:
+    for v in [v for v in VARIANTS if (PROGRAMS[0], v) in t]:
         cells, ratios = [], []
         for p in PROGRAMS:
             m = statistics.median(t[(p, v)])
@@ -52,7 +52,7 @@ def runtime(rd):
             m[(p, v)] = (float(rss), int(size))
         print("| | binarytrees 最大 RSS | nbody 最大 RSS | fib の binary |")
         print("|---|---|---|---|")
-        for v in VARIANTS:
+        for v in [v for v in VARIANTS if ("fib", v) in m]:
             print(f"| {v} | {m[('binarytrees', v)][0] / 2**20:.1f} MB | {m[('nbody', v)][0] / 2**20:.1f} MB | {m[('fib', v)][1] / 1024:.0f} KB |")
         print()
 
@@ -64,13 +64,17 @@ def instructions(rd):
     n = {}
     for line in open(f):
         p, v, c = line.split()
-        n[(p, v)] = int(c)
+        n[(p, v)] = None if c == "-" else int(c)
     print("## 実行命令数(valgrind)\n")
     print("10^9 命令。括弧は C -O2 に対する比。\n")
     print("| | " + " | ".join(PROGRAMS) + " |")
     print("|---|" + "---|" * len(PROGRAMS))
-    for v in VARIANTS:
-        print(f"| {v} | " + " | ".join(f"{n[(p, v)] / 1e9:.2f} ({n[(p, v)] / n[(p, 'c-O2')]:.2f})" for p in PROGRAMS) + " |")
+    for v in [v for v in VARIANTS if (PROGRAMS[0], v) in n]:
+        cells = []
+        for p in PROGRAMS:
+            c = n.get((p, v))
+            cells.append("—" if c is None else f"{c / 1e9:.2f} ({c / n[(p, 'c-O2')]:.2f})")
+        print(f"| {v} | " + " | ".join(cells) + " |")
     print()
 
 
