@@ -42,6 +42,15 @@ scripts/all.sh 2026-11-17-mymachine ../kizu    # kizu の checkout を渡すと�
 main の compiler を測るときは `KIZU=/path/to/kizu` を渡す。個別には `scripts/` の各 script を
 直接呼べる。
 
+compiler の変更が何を変えたかは `scripts/compiler-ab.sh` で比べる(Linux)。各 rev の compiler を
+同じ種で build し(`target/compilers/` に残る)、全部に最後の rev の `compiler/` を build させて、
+user・sys・wall・最大 RSS・page fault の中央値、perf の命令数と cycles、callgrind の関数ごとの
+命令数を並べる。`MASSIF=1` で heap のピークも取る。
+
+```sh
+MASSIF=1 scripts/compiler-ab.sh ../kizu results/<label> <rev> <rev>...
+```
+
 時間を測るマシンでは他の作業を止める。手元で普段使いの Mac は向かない(macOS はコアを
 固定できず、負荷が高いと効率コアに回される)。公表する数値は、仮想化のない専用の Linux で
 測ったものだけにする。

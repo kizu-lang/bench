@@ -49,7 +49,7 @@
             pkgs.hyperfine
             pkgs.gnumake
             pkgs.python3
-          ] ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.valgrind pkgs.time pkgs.util-linux ];
+          ] ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.valgrind pkgs.time pkgs.util-linux pkgs.perf pkgs.strace ];
           shellHook = ''
             export CC=clang
             # The C variant c-O3native asks for the host CPU; the wrapper drops it otherwise.
