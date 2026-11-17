@@ -2,12 +2,16 @@
 # all.sh LABEL [KIZU_CHECKOUT]: every measurement into results/LABEL/.
 # LABEL names the run, for example 2026-11-17-ryzen9700x-wsl2. With a kizu
 # checkout, the real-code comparison builds its compiler/ too.
+# REUSE=<earlier label> measures only kizu and c-O2 (or ONLY) and takes every other variant from that run.
 set -euo pipefail
+[ -n "${REUSE:-}" ] && export ONLY=${ONLY:-kizu c-O2}
 source "$(dirname "$0")/common.sh"
 label=$1; checkout=${2:-}
 out=$ROOT/results/$label
+[ -e $out ] && { echo "$out exists" >&2; exit 1; }
 mkdir -p $out
 S=$ROOT/scripts
+if [ -n "${REUSE:-}" ]; then python3 $S/reuse.py $ROOT/results/$REUSE $out $ONLY; fi
 $S/machine-info.sh $out
 $S/build-runtime.sh
 $S/check.sh
