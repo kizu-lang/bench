@@ -8,7 +8,6 @@ out=$1; bin=${2:-$ROOT/target/bin}
 mkdir -p "$out"
 # valgrind refuses to start under a huge descriptor limit (WSL2 has one).
 ulimit -n 65536
-: > "$out/instructions.txt"
 for p in $PROGRAMS; do
   for v in $(built $bin $p); do
     # A binary for the host CPU (c-O3native) can use instructions valgrind does not know; it gets "-".

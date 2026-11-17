@@ -39,7 +39,17 @@ scripts/all.sh 2026-11-17-mymachine            # results/<label>/ に生デー�
 scripts/all.sh 2026-11-17-mymachine ../kizu    # kizu の checkout を渡すと実在のコードも
 ```
 
-main の compiler を測るときは `KIZU=/path/to/kizu` を渡す。個別には `scripts/` の各 script を
+main の compiler を測るときは `KIZU=/path/to/kizu` を渡す。kizu だけを測り直すときは
+`REUSE=<前の label>` を足す。kizu と c-O2 の版だけを測り、他の言語はその run の値を使う
+(他の道具は `flake.nix` で版が固定なので変わらない)。c-O2 は両方の run で測り、その差を
+README に出す。マシンの状態が変わっていれば、そこに現れる。測る版は `ONLY="kizu c-O2"` の
+ように名前の頭で変えられる。
+
+```sh
+KIZU=../kizu/target/release/kizu REUSE=2026-11-17-mymachine scripts/all.sh 2026-11-18-mymachine ../kizu
+```
+
+個別には `scripts/` の各 script を
 直接呼べる。
 
 compiler の変更が何を変えたかは `scripts/compiler-ab.sh` で比べる(Linux)。各 rev の compiler を

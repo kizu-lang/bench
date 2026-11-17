@@ -15,17 +15,19 @@ seeds=$work/seeds
 seed() {
   rm -rf $seeds; mkdir -p $seeds/h
   printf 'fn main() -> void {\n    print(1);\n    return;\n}\n' > $seeds/h/h.kizu
-  for flags in "" "$KIZU_LLVM" "--opt" "--opt $KIZU_LLVM"; do
+  selected kizu && for flags in "" "$KIZU_LLVM" "--opt" "--opt $KIZU_LLVM"; do
     KIZU_CACHE_DIR=$seeds/kc $KIZU build --target native $flags -o $seeds/h/hk $seeds/h/h.kizu > /dev/null
   done
+  selected go || return 0
   printf 'package main\nimport "fmt"\nfunc main() { fmt.Println(1) }\n' > $seeds/h/h.go
   (cd $seeds/h && GOCACHE=$seeds/gc go build -o hg h.go && GOCACHE=$seeds/gc $C/go-noopt.sh -o hg h.go)
   printf 'const std = @import("std");\npub fn main() void { std.debug.print("1\\n", .{}); }\n' > $seeds/h/h.zig
+  selected zig || return 0
   for m in Debug ReleaseFast; do
     (cd $seeds/h && ZIG_GLOBAL_CACHE_DIR=$seeds/zg ZIG_LOCAL_CACHE_DIR=$seeds/h/zl zig build-exe -O $m h.zig -femit-bin=hz)
   done
 }
-[ -d $seeds/kc ] || seed
+seed
 
 for m in $sizes; do
   P=$work/m$m R=$out/m$m
@@ -33,9 +35,10 @@ for m in $sizes; do
   [ -d $P ] || python3 $C/gen.py $P $m 50
   export KIZU_CACHE_DIR=$P/kc GOCACHE=$P/gc ZIG_GLOBAL_CACHE_DIR=$P/zg ZIG_LOCAL_CACHE_DIR=$P/zl GOFLAGS=-buildvcs=false
   touch $R/rss.txt
-  hf() { hyperfine -N --style none --warmup 1 --runs ${RUNS:-5} --export-json "$R/$1.json" "${@:2}" > /dev/null; }
+  hf() { selected $1 || return 0; hyperfine -N --style none --warmup 1 --runs ${RUNS:-5} --export-json "$R/$1.json" "${@:2}" > /dev/null; }
   set_of() { # name dir command seed edit-file
     local l=$1 d=$2 cmd=$3 sd=$4 f=$5
+    selected $l || return 0
     cd $d
     hf $l-cold --prepare "$sd" "$cmd"
     hf $l-noop "$cmd"

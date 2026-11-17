@@ -9,8 +9,15 @@ else
   KIZU_DIRECT=0; KIZU_LLVM=""
 fi
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
-built() { # BIN PROGRAM: the variants of PROGRAM that exist in BIN
-  for v in $VARIANTS; do [ -x "$1/$2-$v" ] && echo $v; done
+# ONLY: variant name prefixes to measure, for example "kizu c-O2". Empty measures every variant.
+ONLY=${ONLY:-}
+selected() {
+  [ -z "$ONLY" ] && return 0
+  for w in $ONLY; do [[ $1 == $w* ]] && return 0; done
+  return 1
+}
+built() { # BIN PROGRAM: the selected variants of PROGRAM that exist in BIN
+  for v in $VARIANTS; do [ -x "$1/$2-$v" ] && selected $v && echo $v; done
 }
 NPROC=$(getconf _NPROCESSORS_ONLN)
 if [ "$(uname)" = Darwin ]; then

@@ -23,7 +23,7 @@ def one(path, key="time_wall_clock"):
 def runtime(rd):
     t = {}
     for p in PROGRAMS:
-        for f in sorted(glob.glob(f"{rd}/{p}-r*.json")) + glob.glob(f"{rd}/{p}.json"):
+        for f in sorted(glob.glob(f"{rd}/{p}-*.json")) + glob.glob(f"{rd}/{p}.json"):
             for name, w in walls(f).items():
                 v = name.split(f"{p}-", 1)[1]
                 t.setdefault((p, v), []).extend(w)
@@ -142,8 +142,33 @@ def real(rd):
     print()
 
 
+def c_o2_medians(rd):
+    t = {}
+    for p in PROGRAMS:
+        for f in glob.glob(f"{rd}/runtime/{p}-*.json"):
+            t.setdefault(p, []).extend(walls(f).get(f"{p}-c-O2", []))
+    return {p: statistics.median(w) for p, w in t.items() if w}
+
+
+def reused():
+    f = f"{d}/reused.txt"
+    if not os.path.exists(f):
+        return
+    info = dict(l.split(" ", 1) for l in open(f).read().splitlines())
+    measured, base = info["measured"].split(), info["base"]
+    print(f"`{' '.join(measured)}` で始まる版だけをこの run で測り、他は `{base}` の値を使う。")
+    now, then = c_o2_medians(d), c_o2_medians(os.path.join(os.path.dirname(os.path.normpath(d)), base))
+    common = [p for p in PROGRAMS if p in now and p in then]
+    if common:
+        drift = statistics.geometric_mean([now[p] / then[p] for p in common])
+        print(f"両方の run で測った c-O2 の実行時間は、今回 / `{base}` の幾何平均で {drift:.3f}。"
+              "1 から離れていれば、流用した版との比較はマシンの状態の差を含む。")
+    print()
+
+
 if os.path.exists(f"{d}/machine.txt"):
     print("```\n" + open(f"{d}/machine.txt").read() + "```\n")
+reused()
 runtime(f"{d}/runtime")
 instructions(f"{d}/runtime")
 compile_(f"{d}/compile")
