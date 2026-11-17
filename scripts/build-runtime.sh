@@ -14,8 +14,8 @@ for p in $PROGRAMS; do
   b $KIZU build --target native --opt $KIZU_LLVM -o $bin/$p-kizu-llvm $src/kizu/$p.kizu
   b go build -o $bin/$p-go $src/go/$p.go
   b go build -gcflags=-B -o $bin/$p-go-nobounds $src/go/$p.go
-  b zig build-exe -O ReleaseSafe -lc $src/zig/$p.zig -femit-bin=$bin/$p-zig-safe
-  b zig build-exe -O ReleaseFast -lc $src/zig/$p.zig -femit-bin=$bin/$p-zig-fast
+  b zig build-exe -O ReleaseSafe -mcpu=baseline -lc $src/zig/$p.zig -femit-bin=$bin/$p-zig-safe
+  b zig build-exe -O ReleaseFast -mcpu=baseline -lc $src/zig/$p.zig -femit-bin=$bin/$p-zig-fast
   b clang -O2 -o $bin/$p-c-O2 $src/c/$p.c -lm
   b clang -O3 $NATIVE -o $bin/$p-c-O3native $src/c/$p.c -lm
 done

@@ -3,7 +3,7 @@ PROGRAMS="fib sieve matmul collatz nbody binarytrees"
 VARIANTS="kizu-direct kizu-llvm go go-nobounds zig-safe zig-fast c-O2 c-O3native"
 KIZU=${KIZU:-kizu}
 # Releases before the direct backend take no --backend; they build with LLVM only.
-if $KIZU 2>&1 | grep -q -- '--backend direct'; then
+if [[ "$($KIZU 2>&1 || true)" == *"--backend direct"* ]]; then
   KIZU_DIRECT=1; KIZU_LLVM="--backend llvm"
 else
   KIZU_DIRECT=0; KIZU_LLVM=""
