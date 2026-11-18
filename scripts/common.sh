@@ -30,3 +30,11 @@ else
   # One core for every timed run; BENCH_CPU picks which.
   PIN="taskset -c ${BENCH_CPU:-2}"
 fi
+compiler_at() { # REPO REV WORK: sets rev to REV's short hash, checks REV out at WORK/src-$rev and builds target/compilers/kizu-$rev once
+  rev=$(git -C "$1" rev-parse --short=8 "$2^{commit}")
+  local src=$3/src-$rev bin=$ROOT/target/compilers/kizu-$rev
+  [ -d "$src" ] || git -C "$1" worktree add -q --detach "$src" "$rev"
+  (cd "$src" && scripts/gen-selfhost-version.sh > /dev/null)
+  mkdir -p "$ROOT/target/compilers"
+  [ -x "$bin" ] || (cd "$src" && KIZU_CACHE_DIR=$3/build-cache $KIZU build --target native --opt $KIZU_LLVM -o "$bin" compiler > /dev/null)
+}

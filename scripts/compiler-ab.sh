@@ -10,21 +10,11 @@ mkdir -p "$out"; out=$(cd "$out" && pwd)
 RUNS=${RUNS:-5}
 ulimit -n 65536
 W=$(mktemp -d); trap 'git -C "$repo" worktree prune; rm -rf "$W"' EXIT
-BIN=$ROOT/target/compilers; mkdir -p "$BIN"
+BIN=$ROOT/target/compilers
 
 revs=()
-for r in "$@"; do
-  rev=$(git -C "$repo" rev-parse --short=8 "$r^{commit}"); revs+=("$rev")
-  [ -x "$BIN/kizu-$rev" ] && continue
-  git -C "$repo" worktree add -q --detach "$W/src-$rev" "$rev"
-  (cd "$W/src-$rev" && scripts/gen-selfhost-version.sh > /dev/null &&
-    KIZU_CACHE_DIR=$W/build-cache \
-      $KIZU build --target native --opt $KIZU_LLVM -o "$BIN/kizu-$rev" compiler > /dev/null)
-done
-
+for r in "$@"; do compiler_at "$repo" "$r" "$W"; revs+=("$rev"); done
 input=${revs[-1]}
-[ -d "$W/src-$input" ] || git -C "$repo" worktree add -q --detach "$W/src-$input" "$input"
-(cd "$W/src-$input" && scripts/gen-selfhost-version.sh > /dev/null)
 cd "$W/src-$input"
 export KIZU_LIB_DIR=$PWD/lib/kizu
 mkdir -p "$W/h"; printf 'fn main() -> void {\n    print(1);\n    return;\n}\n' > "$W/h/h.kizu"
@@ -68,6 +58,7 @@ for rev in "${revs[@]}"; do
 done
 for pid in "${pids[@]}"; do wait "$pid"; done
 
+sed -i "s|$HOME|~|g" "$out"/*.cg "$out"/*.massif 2> /dev/null || true
 printf '%s\n' "${revs[@]}" > "$out/revs.txt"
 echo "input $input" > "$out/input.txt"
 "$ROOT/scripts/compiler-ab-report.py" "$out" > "$out/README.md"
