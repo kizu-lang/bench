@@ -35,9 +35,13 @@ Kizu の compiler と、それが出すコードの速さを Go・Zig・C と比
 
 ```sh
 nix develop
-scripts/all.sh 2026-11-17-mymachine            # results/<label>/ に生データと README.md
-scripts/all.sh 2026-11-17-mymachine ../kizu    # kizu の checkout を渡すと実在のコードも
+just compare 2026-11-17-mymachine              # results/<label>/ に生データと README.md
+just ab <label> <rev> <rev>...                 # compiler の rev ごとの A/B(Linux)
+just heap <label> <rev> [input]                # compiler の heap のピークの内訳(Linux)
 ```
+
+kizu の checkout は `../kizu` を使う。別の場所なら `KIZU_CHECKOUT=` で渡す。各 recipe は
+`scripts/` の script を呼ぶだけなので、直接呼んでもよい。
 
 main の compiler を測るときは `KIZU=/path/to/kizu` を渡す。kizu だけを測り直すときは
 `REUSE=<前の label>` を足す。kizu と c-O2 の版だけを測り、他の言語はその run の値を使う
@@ -46,11 +50,8 @@ README に出す。マシンの状態が変わっていれば、そこに現れ�
 ように名前の頭で変えられる。
 
 ```sh
-KIZU=../kizu/target/release/kizu REUSE=2026-11-17-mymachine scripts/all.sh 2026-11-18-mymachine ../kizu
+KIZU=../kizu/target/release/kizu REUSE=2026-11-17-mymachine just compare 2026-11-18-mymachine
 ```
-
-個別には `scripts/` の各 script を
-直接呼べる。
 
 compiler の変更が何を変えたかは `scripts/compiler-ab.sh` で比べる(Linux)。各 rev の compiler を
 同じ種で build し(`target/compilers/` に残る)、全部に最後の rev の `compiler/` を build させて、
@@ -58,7 +59,16 @@ user・sys・wall・最大 RSS・page fault の中央値、perf の命令数と 
 命令数を並べる。`MASSIF=1` で heap のピークも取る。
 
 ```sh
-MASSIF=1 scripts/compiler-ab.sh ../kizu results/<label> <rev> <rev>...
+just ab <label> <rev> <rev>...
+```
+
+1 つの rev の compiler がメモリを何に使っているかは `just heap` で見る。massif で heap のピークを
+compiler の phase ごと、確保した場所ごとに分ける。入力は既定でその rev の `compiler/`。
+`DROP="<関数名>..."` を渡すと、その関数を通る呼び出しと、その関数の確保がなかったときの heap を
+snapshot ごとに出す。
+
+```sh
+DROP=compiler__internal__direct__allocate_laid_out just heap <label> <rev>
 ```
 
 時間を測るマシンでは他の作業を止める。手元で普段使いの Mac は向かない(macOS はコアを

@@ -49,6 +49,7 @@
             pkgs.hyperfine
             pkgs.gnumake
             pkgs.python3
+            pkgs.just
           ] ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux [ pkgs.valgrind pkgs.time pkgs.util-linux pkgs.perf pkgs.strace ];
           shellHook = ''
             export CC=clang
