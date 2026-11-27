@@ -116,7 +116,7 @@ jobs:
         run: |
           set -euo pipefail
           kugi sync
-          just doctor
+          kugi exec -- just doctor
 
       - name: Run benchmark suite
         if: steps.prep.outputs.skip != 'true'
@@ -130,7 +130,7 @@ jobs:
           RUNS: '3'
         run: |
           set -euo pipefail
-          just compare "${RUN_ID}"
+          kugi exec -- just compare "${RUN_ID}"
           mkdir -p "${RUNNER_TEMP}/artifact"
           cp -R "results/${RUN_ID}" "${RUNNER_TEMP}/artifact/${RUN_ID}"
 
