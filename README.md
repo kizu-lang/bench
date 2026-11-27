@@ -38,6 +38,14 @@ just compare 2026-11-28-mymachine              # results/<label>/ に生デー�
 just site                                      # results/ から docs/data.json を再生成
 just ab <label> <rev> <rev>...                 # compiler の rev ごとの A/B(Linux)
 just heap <label> <rev> [input]                # compiler の heap のピークの内訳(Linux)
+just deterministic tmp/det --scale m40         # 負荷非依存の決定論指標 (.text / spill / Callgrind Ir / cache)
+just deterministic-ab base.json cand.json      # 決定論指標の Markdown A/B 差分
+```
+
+Colab 等の共有 Linux x86_64 環境で `kizu` の 2 rev を決定論 A/B 比較するワンライナー:
+
+```sh
+scripts/colab-loop.sh --baseline main --candidate <rev> --scale m40
 ```
 
 kizu の checkout は既定で `../kizu` を使う(`KIZU_CHECKOUT=` で上書き可能、存在しなければ `real-code` は自動でスキップ)。各 recipe は内部で `kugi exec` を呼ぶため、shell への事前 `eval` は不要。
@@ -52,7 +60,7 @@ KIZU=../kizu/target/release/kizu REUSE=2026-11-17-mymachine just compare 2026-11
 
 - `results/<label>/README.md`: 各 run の表と `machine.txt`
 - `docs/`: GitHub Pages (`https://kizu-lang.github.io/bench/`) 向けの静的ダッシュボード(外部 CDN なし)
-- 日次自動計測: `.github/workflows/bench-daily.yml` が毎日 1 回(`ubuntu-latest` `linux-x86_64` と `macos-15` `macos-arm64`)実行し、`results/*-gha-*`（各ターゲット最新 30 回分を保持）と `docs/data.json` を自動更新する。専用マシンの結果とはホスト別に分離して表示する。
+- 日次自動計測: `.github/workflows/bench-daily.yml` が毎日 1 回(`ubuntu-latest` `linux-x86_64` と `macos-15` `macos-arm64`)で `kizu-lang/kizu` `main` HEAD を seed から自動ビルドして計測し、`results/*-gha-*`（各ターゲット最新 30 回分を保持）と `docs/data.json` を自動更新する（`workflow_dispatch` で `kugi.toml` 固定版の計測も選択可）。専用マシンの結果とはホスト別に分離して表示する。
 
 ## License
 

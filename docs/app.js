@@ -395,7 +395,7 @@
     runs.forEach((r) => {
       const opt = document.createElement("option");
       opt.value = r.id;
-      const rev = shortKizu(r.machine && r.machine.kizu);
+      const rev = r.kizu_label || shortKizu(r.machine && r.machine.kizu);
       const date = shortDate(r);
       opt.textContent = rev && rev !== "—" ? `${date} · ${rev}` : r.id;
       opt.title = r.id;
@@ -957,7 +957,10 @@
 
     const selIdx = runs.findIndex((r) => r.id === run.id);
     const xLabels = runs.map((r) => shortKizu(r.machine && r.machine.kizu));
-    const tipLabels = runs.map((r) => `${r.id} (${shortDate(r)})`);
+    const tipLabels = runs.map((r) => {
+      const k = r.kizu_label || shortKizu(r.machine && r.machine.kizu);
+      return k && k !== "—" ? `${r.id} · ${k} (${shortDate(r)})` : `${r.id} (${shortDate(r)})`;
+    });
     const envShort = shortEnvLabel(run.machine_group, run);
 
     if (state.hiMetric === "runtime") {
@@ -1383,7 +1386,7 @@
           : "—";
         return `<tr>
           <td><button type="button" class="run-row-btn" data-pick-run="${esc(r.id)}">${esc(r.id)}</button></td>
-          <td>${esc(shortKizu(r.machine && r.machine.kizu))}</td>
+          <td>${esc(r.kizu_label || shortKizu(r.machine && r.machine.kizu))}</td>
           <td>${kl}</td>
           <td>${kd}</td>
           <td>${ru}</td>

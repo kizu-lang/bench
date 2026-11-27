@@ -1,5 +1,13 @@
 PROGRAMS="fib sieve matmul collatz nbody binarytrees"
 VARIANTS="kizu-direct kizu-llvm rust rust-native go go-nobounds zig-safe zig-fast c-O2 c-O3native"
+if [ -n "${KIZU_OVERRIDE_BIN:-}" ]; then
+  KIZU="$KIZU_OVERRIDE_BIN"
+  export KIZU
+fi
+if [ -n "${KIZU_OVERRIDE_LIB_DIR:-}" ]; then
+  KIZU_LIB_DIR="$KIZU_OVERRIDE_LIB_DIR"
+  export KIZU_LIB_DIR
+fi
 KIZU=${KIZU:-kizu}
 if [[ "$($KIZU 2>&1 || true)" == *"--backend direct"* ]]; then
   KIZU_DIRECT=1

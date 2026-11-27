@@ -20,7 +20,21 @@ mkdir -p "$out"
   fi
   echo "cores: $NPROC"
   echo "load: $(uptime | sed 's/.*load average[s]*: //')"
-  echo "kizu: $($KIZU version)"
+  kizu_ver=$($KIZU version)
+  if [ -n "${KIZU_COMMIT:-}" ]; then
+    case "$kizu_ver" in
+      *"$KIZU_COMMIT"*) ;;
+      *"("*) ;;
+      *) kizu_ver="${kizu_ver} (${KIZU_COMMIT})" ;;
+    esac
+  fi
+  echo "kizu: ${kizu_ver}"
+  if [ -n "${KIZU_SOURCE:-}" ]; then
+    echo "kizu_source: ${KIZU_SOURCE}"
+  fi
+  if [ -n "${KIZU_COMMIT:-}" ]; then
+    echo "kizu_commit: ${KIZU_COMMIT}"
+  fi
   echo "rust: $(rustc --version 2>/dev/null || echo none)"
   echo "cargo: $(cargo --version 2>/dev/null || echo none)"
   echo "go: $(go version)"
