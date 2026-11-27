@@ -1,0 +1,205 @@
+name: bench-daily
+
+on:
+  schedule:
+    - cron: '17 19 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Overwrite today's existing GHA result directories if already present
+        type: boolean
+        required: false
+        default: true
+
+concurrency:
+  group: bench-daily
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  bench:
+    permissions:
+      contents: read
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: ubuntu-latest
+            kugi_asset: kugi-0.1.0-linux-x86_64.tar.gz
+            kugi_sha256: be5e5a997d85300e198768a0dc2999ec2d12cd4d56bda09b393b8625f9998b01
+          - name: macos-arm64
+            os: macos-15
+            kugi_asset: kugi-0.1.0-darwin-aarch64.tar.gz
+            kugi_sha256: d7d8d86bbec5d80b6b9a6993fd230e6344c676bfe0ac5999085c2711deaf8840
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+
+      - name: Prepare benchmark run ID
+        id: prep
+        shell: bash
+        env:
+          TARGET_NAME: ${{ matrix.name }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+        run: |
+          set -euo pipefail
+          RUN_ID="$(date -u +%Y-%m-%d)-gha-${TARGET_NAME}"
+          echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+          if [ -d "results/${RUN_ID}" ]; then
+            if [ "${FORCE}" = "true" ]; then
+              rm -rf "results/${RUN_ID}"
+              echo "skip=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "Results for ${RUN_ID} already exist and force is false; skipping."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install kugi (SHA-256 verified)
+        if: steps.prep.outputs.skip != 'true'
+        shell: bash
+        env:
+          KUGI_ASSET: ${{ matrix.kugi_asset }}
+          KUGI_SHA256: ${{ matrix.kugi_sha256 }}
+        run: |
+          set -euo pipefail
+          archive="${RUNNER_TEMP}/${KUGI_ASSET}"
+          url="https://github.com/soyukke/kugi/releases/download/v0.1.0/${KUGI_ASSET}"
+          curl -fsSL --proto '=https' --proto-redir '=https' -o "$archive" "$url"
+          if [ "$(uname -s)" = "Darwin" ]; then
+            echo "${KUGI_SHA256}  ${archive}" | shasum -a 256 -c -
+          else
+            echo "${KUGI_SHA256}  ${archive}" | sha256sum -c -
+          fi
+          mkdir -p "${RUNNER_TEMP}/kugi-bin"
+          tar -xzf "$archive" --strip-components=1 -C "${RUNNER_TEMP}/kugi-bin"
+          test -x "${RUNNER_TEMP}/kugi-bin/kugi"
+          echo "${RUNNER_TEMP}/kugi-bin" >> "$GITHUB_PATH"
+
+      - name: Verify host toolchains
+        if: steps.prep.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d "${HOME}/.cargo/bin" ]; then
+            echo "${HOME}/.cargo/bin" >> "$GITHUB_PATH"
+            export PATH="${HOME}/.cargo/bin:${PATH}"
+          fi
+          if [ "$(uname -s)" = "Linux" ]; then
+            missing=()
+            command -v clang > /dev/null || missing+=(clang)
+            [ -x /usr/bin/time ] || missing+=(time)
+            if [ "${#missing[@]}" -gt 0 ]; then
+              sudo apt-get update
+              sudo apt-get install -y --no-install-recommends "${missing[@]}"
+            fi
+          fi
+          for tool in clang rustc cargo python3 make; do
+            command -v "$tool" > /dev/null || { echo "missing required tool: $tool" >&2; exit 1; }
+          done
+          clang --version | head -1
+          rustc --version
+          cargo --version
+          python3 --version
+
+      - name: Provision pinned toolchains with kugi
+        if: steps.prep.outputs.skip != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          kugi sync
+          just doctor
+
+      - name: Run benchmark suite
+        if: steps.prep.outputs.skip != 'true'
+        shell: bash
+        env:
+          RUN_ID: ${{ steps.prep.outputs.run_id }}
+          KIZU_CHECKOUT: ''
+          SKIP_REAL_CODE: '1'
+          SKIP_VALGRIND: '1'
+          ROUNDS: '2'
+          RUNS: '3'
+        run: |
+          set -euo pipefail
+          just compare "${RUN_ID}"
+          mkdir -p "${RUNNER_TEMP}/artifact"
+          cp -R "results/${RUN_ID}" "${RUNNER_TEMP}/artifact/${RUN_ID}"
+
+      - name: Upload benchmark results
+        if: steps.prep.outputs.skip != 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: bench-${{ matrix.name }}
+          path: ${{ runner.temp }}/artifact
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    needs: [bench]
+    if: always() && (needs.bench.result == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Download benchmark artifacts
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          pattern: bench-*
+          path: ${{ runner.temp }}/artifacts
+          merge-multiple: true
+
+      - name: Integrate results, prune old CI runs, and regenerate site data
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d "${RUNNER_TEMP}/artifacts" ]; then
+            for d in "${RUNNER_TEMP}/artifacts"/*-gha-*; do
+              [ -d "$d" ] || continue
+              base="$(basename "$d")"
+              rm -rf "results/${base}"
+              cp -R "$d" "results/${base}"
+            done
+          fi
+          python3 scripts/prune-ci-results.py --keep 30
+          python3 scripts/build-site-data.py
+
+      - name: Validate docs/data.json and check for path leaks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m json.tool docs/data.json > /dev/null
+          python3 scripts/build-site-data.py --check
+          if grep -rnE '(/home/|/Users/)' results/ docs/data.json; then
+            echo "Absolute local path leak detected in results/ or docs/data.json." >&2
+            exit 1
+          fi
+
+      - name: Commit and push updated benchmark results
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No changes to publish."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results docs/data.json
+          git commit -m "bench: daily results ($(date -u +%Y-%m-%d))"
+          git push origin HEAD:main

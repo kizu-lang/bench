@@ -29,8 +29,14 @@ if [ "$(uname)" = Darwin ]; then
   PIN=""
 else
   NATIVE=-march=native
-  TIMEV="time -v"
-  PIN="taskset -c ${BENCH_CPU:-2}"
+  TIMEV="/usr/bin/time -v"
+  if [ "${BENCH_CPU:-}" = "none" ] || ! command -v taskset > /dev/null; then
+    PIN=""
+  else
+    default_cpu=0
+    [ "$NPROC" -gt 2 ] && default_cpu=2
+    PIN="taskset -c ${BENCH_CPU:-$default_cpu}"
+  fi
 fi
 compiler_at() {
   rev=$(git -C "$1" rev-parse --short=8 "$2^{commit}")

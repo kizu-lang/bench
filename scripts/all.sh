@@ -15,11 +15,11 @@ fi
 "$S/build-runtime.sh"
 "$S/check.sh"
 "$S/run-runtime.sh" "$out/runtime"
-if command -v valgrind > /dev/null; then
+if [ "${SKIP_VALGRIND:-0}" != 1 ] && command -v valgrind > /dev/null; then
   "$S/instructions.sh" "$out/runtime"
 fi
 "$S/compile-bench.sh" "$out/compile"
-if [ -n "$checkout" ] && [ -d "$checkout/compiler/src" ]; then
+if [ "${SKIP_REAL_CODE:-0}" != 1 ] && [ -n "$checkout" ] && [ -d "$checkout/compiler/src" ]; then
   "$S/real-code.sh" "$checkout" "$out/real"
 fi
 echo "load after: $(uptime | sed 's/.*load average[s]*: //')" >> "$out/machine.txt"

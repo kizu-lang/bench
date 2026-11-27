@@ -170,7 +170,11 @@
     }
 
     let xAxis = "";
+    const labelStep = Math.max(1, Math.ceil(xLabels.length / 6));
     xLabels.forEach((lbl, i) => {
+      const isLast = i === xLabels.length - 1;
+      const show = i === 0 || isLast || (i % labelStep === 0 && xLabels.length - 1 - i >= Math.ceil(labelStep / 2));
+      if (!show) return;
       const x = xAt(i);
       xAxis += `<text x="${x.toFixed(1)}" y="${height - 14}" text-anchor="middle" fill="#526072" font-size="11" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">${esc(lbl)}</text>`;
     });
@@ -225,6 +229,7 @@
   function renderMeta(run) {
     const m = run.machine || {};
     const items = [
+      ["Runner", m.runner],
       ["CPU", m.cpu],
       ["OS", m.os],
       ["Cores", m.cores],
