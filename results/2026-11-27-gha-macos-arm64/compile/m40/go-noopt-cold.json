@@ -1,0 +1,135 @@
+{
+  "schema_version": 2,
+  "metadata": {
+    "hyperfine_version": "2.0.0",
+    "start_time": "2026-11-27T18:09:05Z",
+    "platform": {
+      "os": "Darwin",
+      "architecture": "arm64"
+    }
+  },
+  "primary_metric": "time_wall_clock",
+  "results": [
+    {
+      "command": "../../../../compile/go-noopt.sh -o app .",
+      "measurements": [
+        {
+          "time_wall_clock": {
+            "value": 0.50660875,
+            "unit": "second"
+          },
+          "time_cpu": {
+            "value": 1.083858,
+            "unit": "second"
+          },
+          "time_user": {
+            "value": 0.8141309999999999,
+            "unit": "second"
+          },
+          "time_system": {
+            "value": 0.269727,
+            "unit": "second"
+          },
+          "memory_peak_resident": {
+            "value": 24707072.0,
+            "unit": "byte"
+          },
+          "exit_code": 0
+        },
+        {
+          "time_wall_clock": {
+            "value": 0.646583667,
+            "unit": "second"
+          },
+          "time_cpu": {
+            "value": 1.1318489999999999,
+            "unit": "second"
+          },
+          "time_user": {
+            "value": 0.82997,
+            "unit": "second"
+          },
+          "time_system": {
+            "value": 0.301879,
+            "unit": "second"
+          },
+          "memory_peak_resident": {
+            "value": 24788992.0,
+            "unit": "byte"
+          },
+          "exit_code": 0
+        },
+        {
+          "time_wall_clock": {
+            "value": 0.414322416,
+            "unit": "second"
+          },
+          "time_cpu": {
+            "value": 1.00816,
+            "unit": "second"
+          },
+          "time_user": {
+            "value": 0.759992,
+            "unit": "second"
+          },
+          "time_system": {
+            "value": 0.248168,
+            "unit": "second"
+          },
+          "memory_peak_resident": {
+            "value": 24674304.0,
+            "unit": "byte"
+          },
+          "exit_code": 0
+        }
+      ],
+      "summary": {
+        "memory_peak_resident": {
+          "unit": "byte",
+          "count": 3,
+          "mean": 24723456.0,
+          "stddev": 59073.352097202,
+          "median": 24707072.0,
+          "min": 24674304.0,
+          "max": 24788992.0
+        },
+        "time_cpu": {
+          "unit": "second",
+          "count": 3,
+          "mean": 1.0746223333333333,
+          "stddev": 0.06235956489852483,
+          "median": 1.083858,
+          "min": 1.00816,
+          "max": 1.1318489999999999
+        },
+        "time_system": {
+          "unit": "second",
+          "count": 3,
+          "mean": 0.273258,
+          "stddev": 0.027029037182260122,
+          "median": 0.269727,
+          "min": 0.248168,
+          "max": 0.301879
+        },
+        "time_user": {
+          "unit": "second",
+          "count": 3,
+          "mean": 0.8013643333333333,
+          "stddev": 0.03669429048685002,
+          "median": 0.8141309999999999,
+          "min": 0.759992,
+          "max": 0.82997
+        },
+        "time_wall_clock": {
+          "unit": "second",
+          "count": 3,
+          "mean": 0.5225049443333334,
+          "stddev": 0.11694374256339488,
+          "median": 0.50660875,
+          "min": 0.414322416,
+          "max": 0.646583667
+        }
+      }
+    }
+  ]
+}

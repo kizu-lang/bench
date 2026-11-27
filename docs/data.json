@@ -47,6 +47,3154 @@
   },
   "runs": [
     {
+      "id": "2026-11-27-gha-macos-arm64",
+      "kind": "compare",
+      "machine_group": "GitHub Actions (macOS arm64)",
+      "kizu_label": "v0.10.0",
+      "kizu_commit": "4dc4d261f621",
+      "machine": {
+        "date": "2026-11-27T17:51:51Z",
+        "os": "Darwin 24.6.0 arm64",
+        "cpu": "Apple M1 (Virtual)",
+        "runner": "GitHub Actions",
+        "cores": "3",
+        "load": "59.73 33.15 13.77",
+        "kizu": "kizu v0.10.0 (4dc4d261f621, 2026-11-27T01:17:54Z)",
+        "rust": "rustc 1.100.0 (0ef1bc386 2026-11-09)",
+        "cargo": "cargo 1.100.0 (3acc79c0c 2026-11-05)",
+        "go": "go version go1.27.4 darwin/arm64",
+        "zig": "0.17.1",
+        "clang": "Apple clang version 17.0.0 (clang-1700.0.13.5)",
+        "pin": "none",
+        "load after": "7.61 5.18 5.59"
+      },
+      "runtime": {
+        "variants": {
+          "kizu-direct": {
+            "geomean": 1.2838,
+            "programs": {
+              "fib": {
+                "median": 0.877205,
+                "min": 0.798914,
+                "max": 0.895095,
+                "ratio": 0.9769,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 1.108328,
+                "min": 1.085326,
+                "max": 1.159419,
+                "ratio": 2.3341,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 1.058676,
+                "min": 0.943981,
+                "max": 1.1696,
+                "ratio": 1.0306,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 1.03182,
+                "min": 1.013829,
+                "max": 1.135379,
+                "ratio": 1.1022,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 1.866609,
+                "min": 1.734458,
+                "max": 2.08093,
+                "ratio": 1.5877,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.496423,
+                "min": 1.407344,
+                "max": 1.512197,
+                "ratio": 1.0889,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 19.17,
+            "nbody_rss_mb": 1.2,
+            "fib_binary_kb": 110.8
+          },
+          "kizu-llvm": {
+            "geomean": 0.9544,
+            "programs": {
+              "fib": {
+                "median": 0.934098,
+                "min": 0.820913,
+                "max": 1.067062,
+                "ratio": 1.0402,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.57836,
+                "min": 0.577479,
+                "max": 0.637261,
+                "ratio": 1.218,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.824632,
+                "min": 0.798817,
+                "max": 0.866994,
+                "ratio": 0.8027,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 1.063257,
+                "min": 1.023018,
+                "max": 1.084557,
+                "ratio": 1.1358,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.652626,
+                "min": 0.630048,
+                "max": 0.698261,
+                "ratio": 0.5551,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.619372,
+                "min": 1.47963,
+                "max": 1.867129,
+                "ratio": 1.1783,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 19.17,
+            "nbody_rss_mb": 1.2,
+            "fib_binary_kb": 110.7
+          },
+          "rust": {
+            "geomean": 0.9207,
+            "programs": {
+              "fib": {
+                "median": 1.045686,
+                "min": 0.86996,
+                "max": 1.271203,
+                "ratio": 1.1645,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.482834,
+                "min": 0.466519,
+                "max": 0.51623,
+                "ratio": 1.0168,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.808118,
+                "min": 0.801736,
+                "max": 0.853685,
+                "ratio": 0.7867,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 0.983704,
+                "min": 0.913844,
+                "max": 1.120177,
+                "ratio": 1.0508,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.642136,
+                "min": 0.617018,
+                "max": 0.65665,
+                "ratio": 0.5462,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.565984,
+                "min": 1.512029,
+                "max": 1.7205,
+                "ratio": 1.1395,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 19.33,
+            "nbody_rss_mb": 1.36,
+            "fib_binary_kb": 461.7
+          },
+          "rust-native": {
+            "geomean": 0.9013,
+            "programs": {
+              "fib": {
+                "median": 0.890222,
+                "min": 0.870877,
+                "max": 0.977233,
+                "ratio": 0.9914,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.520027,
+                "min": 0.485055,
+                "max": 0.581475,
+                "ratio": 1.0951,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.818773,
+                "min": 0.803748,
+                "max": 0.921618,
+                "ratio": 0.797,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 1.032569,
+                "min": 0.995967,
+                "max": 1.132006,
+                "ratio": 1.103,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.626194,
+                "min": 0.609279,
+                "max": 0.676475,
+                "ratio": 0.5326,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.449226,
+                "min": 1.41292,
+                "max": 1.549902,
+                "ratio": 1.0545,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 19.33,
+            "nbody_rss_mb": 1.31,
+            "fib_binary_kb": 461.8
+          },
+          "go": {
+            "geomean": 1.3331,
+            "programs": {
+              "fib": {
+                "median": 0.96421,
+                "min": 0.958282,
+                "max": 0.972601,
+                "ratio": 1.0738,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 1.006773,
+                "min": 0.981495,
+                "max": 1.048747,
+                "ratio": 2.1202,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 1.266022,
+                "min": 1.23608,
+                "max": 1.402743,
+                "ratio": 1.2324,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 2.017809,
+                "min": 1.392915,
+                "max": 2.846096,
+                "ratio": 2.1554,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 1.177928,
+                "min": 1.109789,
+                "max": 1.276074,
+                "ratio": 1.0019,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.273251,
+                "min": 1.038152,
+                "max": 1.733424,
+                "ratio": 0.9265,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 46.22,
+            "nbody_rss_mb": 3.58,
+            "fib_binary_kb": 2372.8
+          },
+          "go-nobounds": {
+            "geomean": 1.3,
+            "programs": {
+              "fib": {
+                "median": 1.109964,
+                "min": 1.000888,
+                "max": 1.189477,
+                "ratio": 1.2361,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 1.029708,
+                "min": 0.994884,
+                "max": 1.500146,
+                "ratio": 2.1685,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 1.257823,
+                "min": 1.180192,
+                "max": 1.30274,
+                "ratio": 1.2244,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 1.460292,
+                "min": 1.437628,
+                "max": 1.49152,
+                "ratio": 1.5599,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 1.210386,
+                "min": 1.192385,
+                "max": 1.712049,
+                "ratio": 1.0296,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.258529,
+                "min": 1.045406,
+                "max": 1.365995,
+                "ratio": 0.9158,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 47.03,
+            "nbody_rss_mb": 3.47,
+            "fib_binary_kb": 2372.8
+          },
+          "zig-safe": {
+            "geomean": 1.141,
+            "programs": {
+              "fib": {
+                "median": 1.163302,
+                "min": 1.148559,
+                "max": 1.208899,
+                "ratio": 1.2955,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 1.152975,
+                "min": 1.086656,
+                "max": 1.233122,
+                "ratio": 2.4281,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.81219,
+                "min": 0.798435,
+                "max": 0.855516,
+                "ratio": 0.7906,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 1.286747,
+                "min": 1.235587,
+                "max": 1.393896,
+                "ratio": 1.3745,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.734342,
+                "min": 0.673829,
+                "max": 0.807163,
+                "ratio": 0.6246,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.420347,
+                "min": 1.246837,
+                "max": 1.507285,
+                "ratio": 1.0335,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 19.28,
+            "nbody_rss_mb": 1.33,
+            "fib_binary_kb": 458.0
+          },
+          "zig-fast": {
+            "geomean": 0.9594,
+            "programs": {
+              "fib": {
+                "median": 0.925749,
+                "min": 0.877308,
+                "max": 1.09694,
+                "ratio": 1.0309,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.79702,
+                "min": 0.755928,
+                "max": 0.86632,
+                "ratio": 1.6785,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.82383,
+                "min": 0.80103,
+                "max": 0.861576,
+                "ratio": 0.802,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 0.972314,
+                "min": 0.902768,
+                "max": 1.063056,
+                "ratio": 1.0386,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.639849,
+                "min": 0.574253,
+                "max": 0.680513,
+                "ratio": 0.5443,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.366109,
+                "min": 1.282617,
+                "max": 1.439869,
+                "ratio": 0.994,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 19.28,
+            "nbody_rss_mb": 1.3,
+            "fib_binary_kb": 369.8
+          },
+          "c-O2": {
+            "geomean": 1.0,
+            "programs": {
+              "fib": {
+                "median": 0.897963,
+                "min": 0.844752,
+                "max": 0.962196,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.474849,
+                "min": 0.463094,
+                "max": 0.493752,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 1.027259,
+                "min": 0.9969,
+                "max": 1.168592,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 0.936166,
+                "min": 0.919198,
+                "max": 0.978815,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 1.175644,
+                "min": 1.142668,
+                "max": 1.251913,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.374304,
+                "min": 1.343712,
+                "max": 1.505869,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 19.12,
+            "nbody_rss_mb": 1.16,
+            "fib_binary_kb": 32.7
+          },
+          "c-O3native": {
+            "geomean": 0.9396,
+            "programs": {
+              "fib": {
+                "median": 0.969454,
+                "min": 0.904659,
+                "max": 0.999225,
+                "ratio": 1.0796,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.506486,
+                "min": 0.46953,
+                "max": 0.59198,
+                "ratio": 1.0666,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 1.05902,
+                "min": 1.016546,
+                "max": 1.127946,
+                "ratio": 1.0309,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 1.028634,
+                "min": 0.927506,
+                "max": 1.095955,
+                "ratio": 1.0988,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.659376,
+                "min": 0.588504,
+                "max": 0.730771,
+                "ratio": 0.5609,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.292608,
+                "min": 1.235661,
+                "max": 1.414428,
+                "ratio": 0.9406,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 19.12,
+            "nbody_rss_mb": 1.16,
+            "fib_binary_kb": 32.7
+          }
+        },
+        "spread": 0.7202,
+        "min_samples": 6,
+        "has_instructions": false
+      },
+      "compile": {
+        "sizes": [
+          "m10",
+          "m40",
+          "m160"
+        ],
+        "scenarios": {
+          "cold": {
+            "m10": {
+              "kizu-direct": {
+                "wall": 0.1752,
+                "cpu": 0.194
+              },
+              "kizu-llvm": {
+                "wall": 0.3179,
+                "cpu": 0.5125
+              },
+              "rust-debug": {
+                "wall": 0.4699,
+                "cpu": 0.6508
+              },
+              "go-noopt": {
+                "wall": 0.1502,
+                "cpu": 0.3403
+              },
+              "zig-debug": {
+                "wall": 1.7596,
+                "cpu": 1.7415
+              },
+              "c-O0": {
+                "wall": 0.2043,
+                "cpu": 0.4269
+              },
+              "kizu-direct-opt": {
+                "wall": 0.192,
+                "cpu": 0.2168
+              },
+              "kizu-llvm-opt": {
+                "wall": 0.3767,
+                "cpu": 0.3954
+              },
+              "rust-release": {
+                "wall": 1.7563,
+                "cpu": 3.3775
+              },
+              "go": {
+                "wall": 0.1616,
+                "cpu": 0.3865
+              },
+              "zig-fast": {
+                "wall": 7.2365,
+                "cpu": 7.1567
+              },
+              "c-O2": {
+                "wall": 1.286,
+                "cpu": 3.1374
+              }
+            },
+            "m40": {
+              "kizu-direct": {
+                "wall": 0.3721,
+                "cpu": 0.3731
+              },
+              "kizu-llvm": {
+                "wall": 0.7764,
+                "cpu": 1.3531
+              },
+              "rust-debug": {
+                "wall": 1.1363,
+                "cpu": 1.6616
+              },
+              "go-noopt": {
+                "wall": 0.5066,
+                "cpu": 1.0839
+              },
+              "zig-debug": {
+                "wall": 2.303,
+                "cpu": 2.2709
+              },
+              "c-O0": {
+                "wall": 0.5079,
+                "cpu": 1.2183
+              },
+              "kizu-direct-opt": {
+                "wall": 0.3688,
+                "cpu": 0.3907
+              },
+              "kizu-llvm-opt": {
+                "wall": 1.1559,
+                "cpu": 1.1933
+              },
+              "rust-release": {
+                "wall": 5.5426,
+                "cpu": 12.5375
+              },
+              "go": {
+                "wall": 0.4711,
+                "cpu": 1.1858
+              },
+              "zig-fast": {
+                "wall": 7.3995,
+                "cpu": 7.3595
+              },
+              "c-O2": {
+                "wall": 4.4484,
+                "cpu": 12.433
+              }
+            },
+            "m160": {
+              "kizu-direct": {
+                "wall": 1.1192,
+                "cpu": 1.1083
+              },
+              "kizu-llvm": {
+                "wall": 2.9384,
+                "cpu": 5.3365
+              },
+              "rust-debug": {
+                "wall": 4.2932,
+                "cpu": 6.7642
+              },
+              "go-noopt": {
+                "wall": 1.7147,
+                "cpu": 4.5824
+              },
+              "zig-debug": {
+                "wall": 6.0025,
+                "cpu": 6.0846
+              },
+              "c-O0": {
+                "wall": 3.8544,
+                "cpu": 9.0341
+              },
+              "kizu-direct-opt": {
+                "wall": 1.1498,
+                "cpu": 1.1772
+              },
+              "kizu-llvm-opt": {
+                "wall": 4.8029,
+                "cpu": 4.8098
+              },
+              "rust-release": {
+                "wall": 21.8015,
+                "cpu": 54.9894
+              },
+              "go": {
+                "wall": 1.676,
+                "cpu": 4.5756
+              },
+              "zig-fast": {
+                "wall": 14.4916,
+                "cpu": 14.4623
+              },
+              "c-O2": {
+                "wall": 22.2331,
+                "cpu": 61.6391
+              }
+            }
+          },
+          "edit": {
+            "m10": {
+              "kizu-direct": {
+                "wall": 0.1612,
+                "cpu": 0.1856
+              },
+              "kizu-llvm": {
+                "wall": 0.1934,
+                "cpu": 0.2115
+              },
+              "rust-debug": {
+                "wall": 0.413,
+                "cpu": 0.5657
+              },
+              "go-noopt": {
+                "wall": 0.2036,
+                "cpu": 0.2251
+              },
+              "zig-debug": {
+                "wall": 1.7693,
+                "cpu": 1.7918
+              },
+              "c-O0": {
+                "wall": 0.0095,
+                "cpu": 0.0069
+              },
+              "kizu-direct-opt": {
+                "wall": 0.1677,
+                "cpu": 0.1863
+              },
+              "kizu-llvm-opt": {
+                "wall": 0.407,
+                "cpu": 0.4276
+              },
+              "rust-release": {
+                "wall": 1.7069,
+                "cpu": 3.2106
+              },
+              "go": {
+                "wall": 0.1461,
+                "cpu": 0.2134
+              },
+              "zig-fast": {
+                "wall": 6.1329,
+                "cpu": 6.154
+              },
+              "c-O2": {
+                "wall": 0.0089,
+                "cpu": 0.0064
+              }
+            },
+            "m40": {
+              "kizu-direct": {
+                "wall": 0.272,
+                "cpu": 0.2911
+              },
+              "kizu-llvm": {
+                "wall": 0.3426,
+                "cpu": 0.3593
+              },
+              "rust-debug": {
+                "wall": 0.9422,
+                "cpu": 1.3975
+              },
+              "go-noopt": {
+                "wall": 0.1482,
+                "cpu": 0.2163
+              },
+              "zig-debug": {
+                "wall": 2.2755,
+                "cpu": 2.2994
+              },
+              "c-O0": {
+                "wall": 0.0092,
+                "cpu": 0.0067
+              },
+              "kizu-direct-opt": {
+                "wall": 0.3047,
+                "cpu": 0.3247
+              },
+              "kizu-llvm-opt": {
+                "wall": 1.2352,
+                "cpu": 1.244
+              },
+              "rust-release": {
+                "wall": 4.788,
+                "cpu": 11.8168
+              },
+              "go": {
+                "wall": 0.1626,
+                "cpu": 0.2332
+              },
+              "zig-fast": {
+                "wall": 7.0404,
+                "cpu": 7.0557
+              },
+              "c-O2": {
+                "wall": 0.0102,
+                "cpu": 0.0074
+              }
+            },
+            "m160": {
+              "kizu-direct": {
+                "wall": 0.8943,
+                "cpu": 0.8631
+              },
+              "kizu-llvm": {
+                "wall": 1.1431,
+                "cpu": 1.1788
+              },
+              "rust-debug": {
+                "wall": 4.0846,
+                "cpu": 6.4424
+              },
+              "go-noopt": {
+                "wall": 0.2672,
+                "cpu": 0.3724
+              },
+              "zig-debug": {
+                "wall": 6.0536,
+                "cpu": 6.1091
+              },
+              "c-O0": {
+                "wall": 0.0198,
+                "cpu": 0.0116
+              },
+              "kizu-direct-opt": {
+                "wall": 0.8767,
+                "cpu": 0.9004
+              },
+              "kizu-llvm-opt": {
+                "wall": 6.1142,
+                "cpu": 6.0313
+              },
+              "rust-release": {
+                "wall": 19.6242,
+                "cpu": 49.7217
+              },
+              "go": {
+                "wall": 0.2321,
+                "cpu": 0.3373
+              },
+              "zig-fast": {
+                "wall": 13.5448,
+                "cpu": 13.4987
+              },
+              "c-O2": {
+                "wall": 0.0121,
+                "cpu": 0.0094
+              }
+            }
+          },
+          "noop": {
+            "m10": {
+              "kizu-direct": {
+                "wall": 0.0723,
+                "cpu": 0.0698
+              },
+              "kizu-llvm": {
+                "wall": 0.0752,
+                "cpu": 0.0724
+              },
+              "rust-debug": {
+                "wall": 0.0265,
+                "cpu": 0.0202
+              },
+              "go-noopt": {
+                "wall": 0.052,
+                "cpu": 0.0752
+              },
+              "zig-debug": {
+                "wall": 1.6854,
+                "cpu": 1.7115
+              },
+              "c-O0": {
+                "wall": 0.0093,
+                "cpu": 0.0067
+              },
+              "kizu-direct-opt": {
+                "wall": 0.0757,
+                "cpu": 0.0729
+              },
+              "kizu-llvm-opt": {
+                "wall": 0.071,
+                "cpu": 0.0688
+              },
+              "rust-release": {
+                "wall": 0.0248,
+                "cpu": 0.0192
+              },
+              "go": {
+                "wall": 0.0543,
+                "cpu": 0.0782
+              },
+              "zig-fast": {
+                "wall": 6.2918,
+                "cpu": 6.3282
+              },
+              "c-O2": {
+                "wall": 0.0083,
+                "cpu": 0.006
+              }
+            },
+            "m40": {
+              "kizu-direct": {
+                "wall": 0.0753,
+                "cpu": 0.0728
+              },
+              "kizu-llvm": {
+                "wall": 0.0761,
+                "cpu": 0.0734
+              },
+              "rust-debug": {
+                "wall": 0.0237,
+                "cpu": 0.0186
+              },
+              "go-noopt": {
+                "wall": 0.0811,
+                "cpu": 0.0822
+              },
+              "zig-debug": {
+                "wall": 2.2798,
+                "cpu": 2.2999
+              },
+              "c-O0": {
+                "wall": 0.0086,
+                "cpu": 0.0063
+              },
+              "kizu-direct-opt": {
+                "wall": 0.0756,
+                "cpu": 0.0733
+              },
+              "kizu-llvm-opt": {
+                "wall": 0.0765,
+                "cpu": 0.0741
+              },
+              "rust-release": {
+                "wall": 0.0224,
+                "cpu": 0.0177
+              },
+              "go": {
+                "wall": 0.0525,
+                "cpu": 0.0862
+              },
+              "zig-fast": {
+                "wall": 7.0759,
+                "cpu": 7.1161
+              },
+              "c-O2": {
+                "wall": 0.0077,
+                "cpu": 0.0058
+              }
+            },
+            "m160": {
+              "kizu-direct": {
+                "wall": 0.0888,
+                "cpu": 0.0862
+              },
+              "kizu-llvm": {
+                "wall": 0.0894,
+                "cpu": 0.0869
+              },
+              "rust-debug": {
+                "wall": 0.0198,
+                "cpu": 0.0158
+              },
+              "go-noopt": {
+                "wall": 0.1201,
+                "cpu": 0.1374
+              },
+              "zig-debug": {
+                "wall": 7.9031,
+                "cpu": 7.9914
+              },
+              "c-O0": {
+                "wall": 0.0207,
+                "cpu": 0.0123
+              },
+              "kizu-direct-opt": {
+                "wall": 0.0932,
+                "cpu": 0.0902
+              },
+              "kizu-llvm-opt": {
+                "wall": 0.1109,
+                "cpu": 0.1079
+              },
+              "rust-release": {
+                "wall": 0.0328,
+                "cpu": 0.0267
+              },
+              "go": {
+                "wall": 0.0717,
+                "cpu": 0.1185
+              },
+              "zig-fast": {
+                "wall": 12.2214,
+                "cpu": 12.2666
+              },
+              "c-O2": {
+                "wall": 0.0174,
+                "cpu": 0.0112
+              }
+            }
+          },
+          "check": {
+            "m10": {
+              "kizu-check": {
+                "wall": 0.0314,
+                "cpu": 0.0307
+              },
+              "rust-check": {
+                "wall": 0.2589,
+                "cpu": 0.244
+              },
+              "go-vet": {
+                "wall": 0.0838,
+                "cpu": 0.1361
+              },
+              "zig-check": {
+                "wall": 0.203,
+                "cpu": 0.2043
+              },
+              "c-check": {
+                "wall": 0.0923,
+                "cpu": 0.1286
+              }
+            },
+            "m40": {
+              "kizu-check": {
+                "wall": 0.103,
+                "cpu": 0.1017
+              },
+              "rust-check": {
+                "wall": 0.6129,
+                "cpu": 0.5955
+              },
+              "go-vet": {
+                "wall": 0.0904,
+                "cpu": 0.1405
+              },
+              "zig-check": {
+                "wall": 0.2038,
+                "cpu": 0.2202
+              },
+              "c-check": {
+                "wall": 0.1891,
+                "cpu": 0.4522
+              }
+            },
+            "m160": {
+              "kizu-check": {
+                "wall": 0.5441,
+                "cpu": 0.5399
+              },
+              "rust-check": {
+                "wall": 2.433,
+                "cpu": 2.4063
+              },
+              "go-vet": {
+                "wall": 0.1518,
+                "cpu": 0.2507
+              },
+              "zig-check": {
+                "wall": 0.4115,
+                "cpu": 0.441
+              },
+              "c-check": {
+                "wall": 0.8467,
+                "cpu": 2.0401
+              }
+            }
+          }
+        },
+        "cache": {
+          "m10": {
+            "kizu-direct": {
+              "total_bytes": 748376,
+              "project_bytes": 506736,
+              "seed_bytes": 241640,
+              "total_mb": 0.714,
+              "project_mb": 0.483,
+              "seed_mb": 0.23,
+              "files": 8
+            },
+            "kizu-llvm": {
+              "total_bytes": 754214,
+              "project_bytes": 507018,
+              "seed_bytes": 247196,
+              "total_mb": 0.719,
+              "project_mb": 0.484,
+              "seed_mb": 0.236,
+              "files": 38
+            },
+            "rust-debug": {
+              "total_bytes": 2900181,
+              "project_bytes": 2900181,
+              "seed_bytes": 0,
+              "total_mb": 2.766,
+              "project_mb": 2.766,
+              "seed_mb": 0.0,
+              "files": 24
+            },
+            "go-noopt": {
+              "total_bytes": 29007433,
+              "project_bytes": 877108,
+              "seed_bytes": 28130325,
+              "total_mb": 27.664,
+              "project_mb": 0.836,
+              "seed_mb": 26.827,
+              "files": 471
+            },
+            "zig-debug": {
+              "total_bytes": 50356097,
+              "project_bytes": 4843247,
+              "seed_bytes": 45512850,
+              "total_mb": 48.023,
+              "project_mb": 4.619,
+              "seed_mb": 43.404,
+              "files": 719
+            },
+            "c-O0": {
+              "total_bytes": 150888,
+              "project_bytes": 150888,
+              "seed_bytes": 0,
+              "total_mb": 0.144,
+              "project_mb": 0.144,
+              "seed_mb": 0.0,
+              "files": 11
+            },
+            "kizu-direct-opt": {
+              "total_bytes": 641972,
+              "project_bytes": 430199,
+              "seed_bytes": 211773,
+              "total_mb": 0.612,
+              "project_mb": 0.41,
+              "seed_mb": 0.202,
+              "files": 8
+            },
+            "kizu-llvm-opt": {
+              "total_bytes": 345846,
+              "project_bytes": 136059,
+              "seed_bytes": 209787,
+              "total_mb": 0.33,
+              "project_mb": 0.13,
+              "seed_mb": 0.2,
+              "files": 6
+            },
+            "rust-release": {
+              "total_bytes": 943284,
+              "project_bytes": 943284,
+              "seed_bytes": 0,
+              "total_mb": 0.9,
+              "project_mb": 0.9,
+              "seed_mb": 0.0,
+              "files": 14
+            },
+            "go": {
+              "total_bytes": 37989955,
+              "project_bytes": 1140724,
+              "seed_bytes": 36849231,
+              "total_mb": 36.23,
+              "project_mb": 1.088,
+              "seed_mb": 35.142,
+              "files": 471
+            },
+            "zig-fast": {
+              "total_bytes": 48369173,
+              "project_bytes": 2910679,
+              "seed_bytes": 45458494,
+              "total_mb": 46.128,
+              "project_mb": 2.776,
+              "seed_mb": 43.353,
+              "files": 718
+            },
+            "c-O2": {
+              "total_bytes": 74112,
+              "project_bytes": 74112,
+              "seed_bytes": 0,
+              "total_mb": 0.071,
+              "project_mb": 0.071,
+              "seed_mb": 0.0,
+              "files": 11
+            }
+          },
+          "m40": {
+            "kizu-direct": {
+              "total_bytes": 1829762,
+              "project_bytes": 1588122,
+              "seed_bytes": 241640,
+              "total_mb": 1.745,
+              "project_mb": 1.515,
+              "seed_mb": 0.23,
+              "files": 8
+            },
+            "kizu-llvm": {
+              "total_bytes": 1824444,
+              "project_bytes": 1577248,
+              "seed_bytes": 247196,
+              "total_mb": 1.74,
+              "project_mb": 1.504,
+              "seed_mb": 0.236,
+              "files": 98
+            },
+            "rust-debug": {
+              "total_bytes": 8568157,
+              "project_bytes": 8568157,
+              "seed_bytes": 0,
+              "total_mb": 8.171,
+              "project_mb": 8.171,
+              "seed_mb": 0.0,
+              "files": 30
+            },
+            "go-noopt": {
+              "total_bytes": 31644793,
+              "project_bytes": 3514468,
+              "seed_bytes": 28130325,
+              "total_mb": 30.179,
+              "project_mb": 3.352,
+              "seed_mb": 26.827,
+              "files": 681
+            },
+            "zig-debug": {
+              "total_bytes": 54900393,
+              "project_bytes": 9387543,
+              "seed_bytes": 45512850,
+              "total_mb": 52.357,
+              "project_mb": 8.953,
+              "seed_mb": 43.404,
+              "files": 749
+            },
+            "c-O0": {
+              "total_bytes": 601312,
+              "project_bytes": 601312,
+              "seed_bytes": 0,
+              "total_mb": 0.573,
+              "project_mb": 0.573,
+              "seed_mb": 0.0,
+              "files": 41
+            },
+            "kizu-direct-opt": {
+              "total_bytes": 1547050,
+              "project_bytes": 1335277,
+              "seed_bytes": 211773,
+              "total_mb": 1.475,
+              "project_mb": 1.273,
+              "seed_mb": 0.202,
+              "files": 8
+            },
+            "kizu-llvm-opt": {
+              "total_bytes": 350617,
+              "project_bytes": 140830,
+              "seed_bytes": 209787,
+              "total_mb": 0.334,
+              "project_mb": 0.134,
+              "seed_mb": 0.2,
+              "files": 6
+            },
+            "rust-release": {
+              "total_bytes": 1115116,
+              "project_bytes": 1115116,
+              "seed_bytes": 0,
+              "total_mb": 1.063,
+              "project_mb": 1.063,
+              "seed_mb": 0.0,
+              "files": 14
+            },
+            "go": {
+              "total_bytes": 41419675,
+              "project_bytes": 4570444,
+              "seed_bytes": 36849231,
+              "total_mb": 39.501,
+              "project_mb": 4.359,
+              "seed_mb": 35.142,
+              "files": 681
+            },
+            "zig-fast": {
+              "total_bytes": 51034941,
+              "project_bytes": 5576447,
+              "seed_bytes": 45458494,
+              "total_mb": 48.671,
+              "project_mb": 5.318,
+              "seed_mb": 43.353,
+              "files": 748
+            },
+            "c-O2": {
+              "total_bytes": 294392,
+              "project_bytes": 294392,
+              "seed_bytes": 0,
+              "total_mb": 0.281,
+              "project_mb": 0.281,
+              "seed_mb": 0.0,
+              "files": 41
+            }
+          },
+          "m160": {
+            "kizu-direct": {
+              "total_bytes": 6161162,
+              "project_bytes": 5919522,
+              "seed_bytes": 241640,
+              "total_mb": 5.876,
+              "project_mb": 5.645,
+              "seed_mb": 0.23,
+              "files": 8
+            },
+            "kizu-llvm": {
+              "total_bytes": 6112244,
+              "project_bytes": 5865048,
+              "seed_bytes": 247196,
+              "total_mb": 5.829,
+              "project_mb": 5.593,
+              "seed_mb": 0.236,
+              "files": 338
+            },
+            "rust-debug": {
+              "total_bytes": 31125365,
+              "project_bytes": 31125365,
+              "seed_bytes": 0,
+              "total_mb": 29.683,
+              "project_mb": 29.683,
+              "seed_mb": 0.0,
+              "files": 30
+            },
+            "go-noopt": {
+              "total_bytes": 42204913,
+              "project_bytes": 14074588,
+              "seed_bytes": 28130325,
+              "total_mb": 40.25,
+              "project_mb": 13.423,
+              "seed_mb": 26.827,
+              "files": 1521
+            },
+            "zig-debug": {
+              "total_bytes": 73089485,
+              "project_bytes": 27576635,
+              "seed_bytes": 45512850,
+              "total_mb": 69.704,
+              "project_mb": 26.299,
+              "seed_mb": 43.404,
+              "files": 869
+            },
+            "c-O0": {
+              "total_bytes": 2403056,
+              "project_bytes": 2403056,
+              "seed_bytes": 0,
+              "total_mb": 2.292,
+              "project_mb": 2.292,
+              "seed_mb": 0.0,
+              "files": 161
+            },
+            "kizu-direct-opt": {
+              "total_bytes": 5123539,
+              "project_bytes": 4911766,
+              "seed_bytes": 211773,
+              "total_mb": 4.886,
+              "project_mb": 4.684,
+              "seed_mb": 0.202,
+              "files": 8
+            },
+            "kizu-llvm-opt": {
+              "total_bytes": 369878,
+              "project_bytes": 160091,
+              "seed_bytes": 209787,
+              "total_mb": 0.353,
+              "project_mb": 0.153,
+              "seed_mb": 0.2,
+              "files": 6
+            },
+            "rust-release": {
+              "total_bytes": 1140860,
+              "project_bytes": 1140860,
+              "seed_bytes": 0,
+              "total_mb": 1.088,
+              "project_mb": 1.088,
+              "seed_mb": 0.0,
+              "files": 14
+            },
+            "go": {
+              "total_bytes": 55152375,
+              "project_bytes": 18303144,
+              "seed_bytes": 36849231,
+              "total_mb": 52.597,
+              "project_mb": 17.455,
+              "seed_mb": 35.142,
+              "files": 1521
+            },
+            "zig-fast": {
+              "total_bytes": 61697937,
+              "project_bytes": 16239443,
+              "seed_bytes": 45458494,
+              "total_mb": 58.84,
+              "project_mb": 15.487,
+              "seed_mb": 43.353,
+              "files": 868
+            },
+            "c-O2": {
+              "total_bytes": 1175528,
+              "project_bytes": 1175528,
+              "seed_bytes": 0,
+              "total_mb": 1.121,
+              "project_mb": 1.121,
+              "seed_mb": 0.0,
+              "files": 161
+            }
+          }
+        },
+        "rss_mb": {
+          "kizu-direct": 472.9,
+          "kizu-direct-opt": 473.5,
+          "kizu-llvm": 455.4,
+          "kizu-llvm-opt": 452.3,
+          "rust-debug": 550.8,
+          "rust-release": 544.4,
+          "go": 25.3,
+          "go-noopt": 25.1,
+          "zig-debug": 704.9,
+          "zig-fast": 567.7,
+          "c-O0": 41.3,
+          "c-O2": 44.3
+        },
+        "rss_by_size": {
+          "m10": {
+            "kizu-direct": 45.1,
+            "kizu-direct-opt": 49.5,
+            "kizu-llvm": 44.5,
+            "kizu-llvm-opt": 48.0,
+            "rust-debug": 127.0,
+            "rust-release": 136.4,
+            "go": 25.2,
+            "go-noopt": 23.5,
+            "zig-debug": 266.6,
+            "zig-fast": 298.2,
+            "c-O0": 34.4,
+            "c-O2": 44.1
+          },
+          "m40": {
+            "kizu-direct": 131.7,
+            "kizu-direct-opt": 123.1,
+            "kizu-llvm": 111.2,
+            "kizu-llvm-opt": 119.1,
+            "rust-debug": 211.7,
+            "rust-release": 212.0,
+            "go": 25.3,
+            "go-noopt": 23.5,
+            "zig-debug": 361.4,
+            "zig-fast": 348.3,
+            "c-O0": 35.5,
+            "c-O2": 43.8
+          },
+          "m160": {
+            "kizu-direct": 472.9,
+            "kizu-direct-opt": 473.5,
+            "kizu-llvm": 455.4,
+            "kizu-llvm-opt": 452.3,
+            "rust-debug": 550.8,
+            "rust-release": 544.4,
+            "go": 25.3,
+            "go-noopt": 25.1,
+            "zig-debug": 704.9,
+            "zig-fast": 567.7,
+            "c-O0": 41.3,
+            "c-O2": 44.3
+          }
+        }
+      },
+      "real": []
+    },
+    {
+      "id": "2026-11-27-gha-linux-x86_64",
+      "kind": "compare",
+      "machine_group": "GitHub Actions (Linux x86_64)",
+      "kizu_label": "v0.10.0",
+      "kizu_commit": "4dc4d261f621",
+      "machine": {
+        "date": "2026-11-27T17:51:43Z",
+        "os": "Linux 7.0.0-1020-azure x86_64",
+        "cpu": "AMD EPYC 9V74 80-Core Processor",
+        "runner": "GitHub Actions",
+        "cores": "4",
+        "load": "0.93, 0.27, 0.10",
+        "kizu": "kizu v0.10.0 (4dc4d261f621, 2026-11-27T01:17:54Z)",
+        "rust": "rustc 1.100.0 (0ef1bc386 2026-11-09)",
+        "cargo": "cargo 1.100.0 (3acc79c0c 2026-11-05)",
+        "go": "go version go1.27.4 linux/amd64",
+        "zig": "0.17.1",
+        "clang": "Ubuntu clang version 21.1.8 (6ubuntu1)",
+        "pin": "taskset -c 2",
+        "load after": "4.85, 3.55, 2.40"
+      },
+      "runtime": {
+        "variants": {
+          "kizu-direct": {
+            "geomean": 1.2244,
+            "programs": {
+              "fib": {
+                "median": 0.589059,
+                "min": 0.588403,
+                "max": 0.590282,
+                "ratio": 0.955,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 1.069997,
+                "min": 1.055624,
+                "max": 1.081303,
+                "ratio": 1.7656,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.947338,
+                "min": 0.945888,
+                "max": 0.948993,
+                "ratio": 1.2431,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 0.766483,
+                "min": 0.766083,
+                "max": 0.772786,
+                "ratio": 1.0064,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 1.586942,
+                "min": 1.585047,
+                "max": 1.590612,
+                "ratio": 1.3093,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.881251,
+                "min": 1.855867,
+                "max": 1.968712,
+                "ratio": 1.2196,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 33.67,
+            "nbody_rss_mb": 1.67,
+            "fib_binary_kb": 84.4
+          },
+          "kizu-llvm": {
+            "geomean": 0.9509,
+            "programs": {
+              "fib": {
+                "median": 0.617985,
+                "min": 0.616316,
+                "max": 0.623644,
+                "ratio": 1.0019,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.61857,
+                "min": 0.616311,
+                "max": 0.622941,
+                "ratio": 1.0207,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.795048,
+                "min": 0.794059,
+                "max": 0.796825,
+                "ratio": 1.0432,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 0.761547,
+                "min": 0.761337,
+                "max": 0.761961,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.787055,
+                "min": 0.786765,
+                "max": 0.787516,
+                "ratio": 0.6494,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.646606,
+                "min": 1.634093,
+                "max": 1.670299,
+                "ratio": 1.0675,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 33.66,
+            "nbody_rss_mb": 1.7,
+            "fib_binary_kb": 84.2
+          },
+          "rust": {
+            "geomean": 1.0121,
+            "programs": {
+              "fib": {
+                "median": 0.621138,
+                "min": 0.616472,
+                "max": 0.631107,
+                "ratio": 1.007,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.793057,
+                "min": 0.791195,
+                "max": 0.817417,
+                "ratio": 1.3086,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.763538,
+                "min": 0.76236,
+                "max": 0.767182,
+                "ratio": 1.0019,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 0.760243,
+                "min": 0.760054,
+                "max": 0.760344,
+                "ratio": 0.9982,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.741244,
+                "min": 0.740791,
+                "max": 0.742402,
+                "ratio": 0.6116,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 2.057288,
+                "min": 2.035832,
+                "max": 2.084432,
+                "ratio": 1.3337,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 34.12,
+            "nbody_rss_mb": 2.17,
+            "fib_binary_kb": 4389.1
+          },
+          "rust-native": {
+            "geomean": 0.9693,
+            "programs": {
+              "fib": {
+                "median": 0.616473,
+                "min": 0.616237,
+                "max": 0.617162,
+                "ratio": 0.9995,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.603918,
+                "min": 0.602453,
+                "max": 0.662529,
+                "ratio": 0.9965,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.771868,
+                "min": 0.771131,
+                "max": 0.774625,
+                "ratio": 1.0128,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 0.759093,
+                "min": 0.758677,
+                "max": 0.759454,
+                "ratio": 0.9967,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.756456,
+                "min": 0.756234,
+                "max": 0.756769,
+                "ratio": 0.6241,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 2.038054,
+                "min": 2.023294,
+                "max": 2.218625,
+                "ratio": 1.3212,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 34.11,
+            "nbody_rss_mb": 2.1,
+            "fib_binary_kb": 4389.1
+          },
+          "go": {
+            "geomean": 1.4696,
+            "programs": {
+              "fib": {
+                "median": 1.339134,
+                "min": 1.255546,
+                "max": 1.34667,
+                "ratio": 2.1711,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 1.135995,
+                "min": 1.135497,
+                "max": 1.138619,
+                "ratio": 1.8745,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.867839,
+                "min": 0.866735,
+                "max": 0.869515,
+                "ratio": 1.1388,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 1.2486,
+                "min": 1.248194,
+                "max": 1.283195,
+                "ratio": 1.6395,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 1.44439,
+                "min": 1.443907,
+                "max": 1.445602,
+                "ratio": 1.1917,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.71603,
+                "min": 1.687012,
+                "max": 1.731922,
+                "ratio": 1.1125,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 35.18,
+            "nbody_rss_mb": 1.89,
+            "fib_binary_kb": 2303.8
+          },
+          "go-nobounds": {
+            "geomean": 1.4044,
+            "programs": {
+              "fib": {
+                "median": 1.31724,
+                "min": 1.271525,
+                "max": 1.346473,
+                "ratio": 2.1356,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.880528,
+                "min": 0.875182,
+                "max": 0.891816,
+                "ratio": 1.453,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.866044,
+                "min": 0.865776,
+                "max": 0.866793,
+                "ratio": 1.1364,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 1.249299,
+                "min": 1.247827,
+                "max": 1.250773,
+                "ratio": 1.6404,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 1.444533,
+                "min": 1.444457,
+                "max": 1.44522,
+                "ratio": 1.1918,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.716891,
+                "min": 1.693526,
+                "max": 1.737501,
+                "ratio": 1.113,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 34.35,
+            "nbody_rss_mb": 1.89,
+            "fib_binary_kb": 2303.7
+          },
+          "zig-safe": {
+            "geomean": 1.2467,
+            "programs": {
+              "fib": {
+                "median": 1.087781,
+                "min": 1.087332,
+                "max": 1.100888,
+                "ratio": 1.7636,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 1.057493,
+                "min": 1.055796,
+                "max": 1.059988,
+                "ratio": 1.745,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.760258,
+                "min": 0.757227,
+                "max": 0.779676,
+                "ratio": 0.9976,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 1.352,
+                "min": 1.350857,
+                "max": 1.388115,
+                "ratio": 1.7753,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.816286,
+                "min": 0.816098,
+                "max": 0.81757,
+                "ratio": 0.6735,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.578259,
+                "min": 1.567567,
+                "max": 1.589986,
+                "ratio": 1.0232,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 33.92,
+            "nbody_rss_mb": 2.0,
+            "fib_binary_kb": 3413.9
+          },
+          "zig-fast": {
+            "geomean": 0.9768,
+            "programs": {
+              "fib": {
+                "median": 0.711512,
+                "min": 0.706892,
+                "max": 0.717558,
+                "ratio": 1.1536,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.609272,
+                "min": 0.60884,
+                "max": 0.609516,
+                "ratio": 1.0054,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.757934,
+                "min": 0.757005,
+                "max": 0.7872,
+                "ratio": 0.9945,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 0.763084,
+                "min": 0.762886,
+                "max": 0.769278,
+                "ratio": 1.002,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.906618,
+                "min": 0.906053,
+                "max": 0.908108,
+                "ratio": 0.748,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.550325,
+                "min": 1.529205,
+                "max": 1.578593,
+                "ratio": 1.0051,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 33.96,
+            "nbody_rss_mb": 1.96,
+            "fib_binary_kb": 3598.5
+          },
+          "c-O2": {
+            "geomean": 1.0,
+            "programs": {
+              "fib": {
+                "median": 0.616797,
+                "min": 0.616115,
+                "max": 0.622925,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.606027,
+                "min": 0.602743,
+                "max": 0.607735,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.762097,
+                "min": 0.761554,
+                "max": 0.77688,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 0.761579,
+                "min": 0.761415,
+                "max": 0.766625,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 1.212048,
+                "min": 1.211519,
+                "max": 1.213389,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.542533,
+                "min": 1.525967,
+                "max": 1.568109,
+                "ratio": 1.0,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 33.66,
+            "nbody_rss_mb": 1.78,
+            "fib_binary_kb": 15.7
+          },
+          "c-O3native": {
+            "geomean": 0.9502,
+            "programs": {
+              "fib": {
+                "median": 0.616479,
+                "min": 0.616271,
+                "max": 0.617198,
+                "ratio": 0.9995,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "sieve": {
+                "median": 0.658528,
+                "min": 0.657449,
+                "max": 0.6618,
+                "ratio": 1.0866,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "matmul": {
+                "median": 0.928533,
+                "min": 0.927875,
+                "max": 0.936165,
+                "ratio": 1.2184,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "collatz": {
+                "median": 0.770729,
+                "min": 0.77041,
+                "max": 0.771638,
+                "ratio": 1.012,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "nbody": {
+                "median": 0.67395,
+                "min": 0.673798,
+                "max": 0.675024,
+                "ratio": 0.556,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              },
+              "binarytrees": {
+                "median": 1.524815,
+                "min": 1.508468,
+                "max": 1.589637,
+                "ratio": 0.9885,
+                "samples": 6,
+                "instructions_g": null,
+                "instructions_ratio": null
+              }
+            },
+            "binarytrees_rss_mb": 33.66,
+            "nbody_rss_mb": 1.66,
+            "fib_binary_kb": 15.7
+          }
+        },
+        "spread": 0.0995,
+        "min_samples": 6,
+        "has_instructions": false
+      },
+      "compile": {
+        "sizes": [
+          "m10",
+          "m40",
+          "m160"
+        ],
+        "scenarios": {
+          "cold": {
+            "m10": {
+              "kizu-direct": {
+                "wall": 0.2054,
+                "cpu": 0.2051
+              },
+              "kizu-llvm": {
+                "wall": 0.3364,
+                "cpu": 0.6812
+              },
+              "rust-debug": {
+                "wall": 0.3115,
+                "cpu": 0.4515
+              },
+              "go-noopt": {
+                "wall": 0.1442,
+                "cpu": 0.4884
+              },
+              "zig-debug": {
+                "wall": 0.4156,
+                "cpu": 1.0002
+              },
+              "c-O0": {
+                "wall": 0.1643,
+                "cpu": 0.4971
+              },
+              "kizu-direct-opt": {
+                "wall": 0.2155,
+                "cpu": 0.2147
+              },
+              "kizu-llvm-opt": {
+                "wall": 0.6546,
+                "cpu": 0.6542
+              },
+              "rust-release": {
+                "wall": 0.9533,
+                "cpu": 2.7734
+              },
+              "go": {
+                "wall": 0.159,
+                "cpu": 0.5509
+              },
+              "zig-fast": {
+                "wall": 13.3003,
+                "cpu": 13.2942
+              },
+              "c-O2": {
+                "wall": 2.1875,
+                "cpu": 7.6575
+              }
+            },
+            "m40": {
+              "kizu-direct": {
+                "wall": 0.4734,
+                "cpu": 0.4729
+              },
+              "kizu-llvm": {
+                "wall": 0.9607,
+                "cpu": 2.2238
+              },
+              "rust-debug": {
+                "wall": 0.9801,
+                "cpu": 1.5458
+              },
+              "go-noopt": {
+                "wall": 0.4586,
+                "cpu": 1.6969
+              },
+              "zig-debug": {
+                "wall": 0.6731,
+                "cpu": 1.489
+              },
+              "c-O0": {
+                "wall": 0.5524,
+                "cpu": 1.9357
+              },
+              "kizu-direct-opt": {
+                "wall": 0.5162,
+                "cpu": 0.5154
+              },
+              "kizu-llvm-opt": {
+                "wall": 2.3133,
+                "cpu": 2.3128
+              },
+              "rust-release": {
+                "wall": 3.8328,
+                "cpu": 11.8712
+              },
+              "go": {
+                "wall": 0.5326,
+                "cpu": 1.9872
+              },
+              "zig-fast": {
+                "wall": 15.2657,
+                "cpu": 15.2889
+              },
+              "c-O2": {
+                "wall": 8.3745,
+                "cpu": 33.132
+              }
+            },
+            "m160": {
+              "kizu-direct": {
+                "wall": 1.5761,
+                "cpu": 1.5757
+              },
+              "kizu-llvm": {
+                "wall": 3.9907,
+                "cpu": 9.6468
+              },
+              "rust-debug": {
+                "wall": 3.8761,
+                "cpu": 6.1438
+              },
+              "go-noopt": {
+                "wall": 1.7306,
+                "cpu": 6.5962
+              },
+              "zig-debug": {
+                "wall": 1.5006,
+                "cpu": 3.3259
+              },
+              "c-O0": {
+                "wall": 2.0493,
+                "cpu": 7.657
+              },
+              "kizu-direct-opt": {
+                "wall": 1.8703,
+                "cpu": 1.8697
+              },
+              "kizu-llvm-opt": {
+                "wall": 9.5678,
+                "cpu": 9.5665
+              },
+              "rust-release": {
+                "wall": 14.4698,
+                "cpu": 44.8173
+              },
+              "go": {
+                "wall": 2.0166,
+                "cpu": 7.7658
+              },
+              "zig-fast": {
+                "wall": 23.0716,
+                "cpu": 23.0767
+              },
+              "c-O2": {
+                "wall": 33.3485,
+                "cpu": 132.3093
+              }
+            }
+          },
+          "edit": {
+            "m10": {
+              "kizu-direct": {
+                "wall": 0.1854,
+                "cpu": 0.1841
+              },
+              "kizu-llvm": {
+                "wall": 0.234,
+                "cpu": 0.2337
+              },
+              "rust-debug": {
+                "wall": 0.2928,
+                "cpu": 0.4359
+              },
+              "go-noopt": {
+                "wall": 0.1281,
+                "cpu": 0.2314
+              },
+              "zig-debug": {
+                "wall": 0.4166,
+                "cpu": 0.9835
+              },
+              "c-O0": {
+                "wall": 0.0648,
+                "cpu": 0.0646
+              },
+              "kizu-direct-opt": {
+                "wall": 0.1946,
+                "cpu": 0.1934
+              },
+              "kizu-llvm-opt": {
+                "wall": 0.6791,
+                "cpu": 0.6617
+              },
+              "rust-release": {
+                "wall": 0.927,
+                "cpu": 2.7418
+              },
+              "go": {
+                "wall": 0.1322,
+                "cpu": 0.2514
+              },
+              "zig-fast": {
+                "wall": 13.3377,
+                "cpu": 13.3474
+              },
+              "c-O2": {
+                "wall": 0.5166,
+                "cpu": 0.5164
+              }
+            },
+            "m40": {
+              "kizu-direct": {
+                "wall": 0.3828,
+                "cpu": 0.3815
+              },
+              "kizu-llvm": {
+                "wall": 0.4837,
+                "cpu": 0.4796
+              },
+              "rust-debug": {
+                "wall": 0.9686,
+                "cpu": 1.5192
+              },
+              "go-noopt": {
+                "wall": 0.141,
+                "cpu": 0.2596
+              },
+              "zig-debug": {
+                "wall": 0.6316,
+                "cpu": 1.4333
+              },
+              "c-O0": {
+                "wall": 0.0686,
+                "cpu": 0.0689
+              },
+              "kizu-direct-opt": {
+                "wall": 0.4376,
+                "cpu": 0.4364
+              },
+              "kizu-llvm-opt": {
+                "wall": 2.297,
+                "cpu": 2.2959
+              },
+              "rust-release": {
+                "wall": 3.8982,
+                "cpu": 11.9092
+              },
+              "go": {
+                "wall": 0.1525,
+                "cpu": 0.2824
+              },
+              "zig-fast": {
+                "wall": 15.3392,
+                "cpu": 15.3037
+              },
+              "c-O2": {
+                "wall": 0.5177,
+                "cpu": 0.5179
+              }
+            },
+            "m160": {
+              "kizu-direct": {
+                "wall": 1.235,
+                "cpu": 1.2332
+              },
+              "kizu-llvm": {
+                "wall": 1.6062,
+                "cpu": 1.5844
+              },
+              "rust-debug": {
+                "wall": 3.8337,
+                "cpu": 6.1607
+              },
+              "go-noopt": {
+                "wall": 0.1985,
+                "cpu": 0.3602
+              },
+              "zig-debug": {
+                "wall": 1.3842,
+                "cpu": 3.1967
+              },
+              "c-O0": {
+                "wall": 0.0865,
+                "cpu": 0.089
+              },
+              "kizu-direct-opt": {
+                "wall": 1.5365,
+                "cpu": 1.5349
+              },
+              "kizu-llvm-opt": {
+                "wall": 9.5887,
+                "cpu": 9.5872
+              },
+              "rust-release": {
+                "wall": 14.3817,
+                "cpu": 44.786
+              },
+              "go": {
+                "wall": 0.2053,
+                "cpu": 0.375
+              },
+              "zig-fast": {
+                "wall": 22.942,
+                "cpu": 22.894
+              },
+              "c-O2": {
+                "wall": 0.533,
+                "cpu": 0.5354
+              }
+            }
+          },
+          "noop": {
+            "m10": {
+              "kizu-direct": {
+                "wall": 0.0835,
+                "cpu": 0.0831
+              },
+              "kizu-llvm": {
+                "wall": 0.0837,
+                "cpu": 0.0834
+              },
+              "rust-debug": {
+                "wall": 0.0145,
+                "cpu": 0.0145
+              },
+              "go-noopt": {
+                "wall": 0.0409,
+                "cpu": 0.0836
+              },
+              "zig-debug": {
+                "wall": 0.4363,
+                "cpu": 0.988
+              },
+              "c-O0": {
+                "wall": 0.0015,
+                "cpu": 0.0013
+              },
+              "kizu-direct-opt": {
+                "wall": 0.0834,
+                "cpu": 0.083
+              },
+              "kizu-llvm-opt": {
+                "wall": 0.0833,
+                "cpu": 0.083
+              },
+              "rust-release": {
+                "wall": 0.0141,
+                "cpu": 0.0141
+              },
+              "go": {
+                "wall": 0.0374,
+                "cpu": 0.0796
+              },
+              "zig-fast": {
+                "wall": 13.2633,
+                "cpu": 13.2722
+              },
+              "c-O2": {
+                "wall": 0.0015,
+                "cpu": 0.0013
+              }
+            },
+            "m40": {
+              "kizu-direct": {
+                "wall": 0.0865,
+                "cpu": 0.0861
+              },
+              "kizu-llvm": {
+                "wall": 0.0866,
+                "cpu": 0.0862
+              },
+              "rust-debug": {
+                "wall": 0.0143,
+                "cpu": 0.0144
+              },
+              "go-noopt": {
+                "wall": 0.0446,
+                "cpu": 0.0949
+              },
+              "zig-debug": {
+                "wall": 0.6717,
+                "cpu": 1.4307
+              },
+              "c-O0": {
+                "wall": 0.0021,
+                "cpu": 0.0019
+              },
+              "kizu-direct-opt": {
+                "wall": 0.0867,
+                "cpu": 0.0864
+              },
+              "kizu-llvm-opt": {
+                "wall": 0.086,
+                "cpu": 0.0856
+              },
+              "rust-release": {
+                "wall": 0.0143,
+                "cpu": 0.0144
+              },
+              "go": {
+                "wall": 0.0406,
+                "cpu": 0.0911
+              },
+              "zig-fast": {
+                "wall": 15.1511,
+                "cpu": 15.1272
+              },
+              "c-O2": {
+                "wall": 0.0021,
+                "cpu": 0.0019
+              }
+            },
+            "m160": {
+              "kizu-direct": {
+                "wall": 0.0977,
+                "cpu": 0.0974
+              },
+              "kizu-llvm": {
+                "wall": 0.098,
+                "cpu": 0.0976
+              },
+              "rust-debug": {
+                "wall": 0.0157,
+                "cpu": 0.0158
+              },
+              "go-noopt": {
+                "wall": 0.055,
+                "cpu": 0.1316
+              },
+              "zig-debug": {
+                "wall": 1.3498,
+                "cpu": 3.1809
+              },
+              "c-O0": {
+                "wall": 0.0044,
+                "cpu": 0.0042
+              },
+              "kizu-direct-opt": {
+                "wall": 0.0986,
+                "cpu": 0.0982
+              },
+              "kizu-llvm-opt": {
+                "wall": 0.0944,
+                "cpu": 0.0942
+              },
+              "rust-release": {
+                "wall": 0.0153,
+                "cpu": 0.0153
+              },
+              "go": {
+                "wall": 0.0503,
+                "cpu": 0.1263
+              },
+              "zig-fast": {
+                "wall": 22.9103,
+                "cpu": 22.8296
+              },
+              "c-O2": {
+                "wall": 0.0045,
+                "cpu": 0.0043
+              }
+            }
+          },
+          "check": {
+            "m10": {
+              "kizu-check": {
+                "wall": 0.0554,
+                "cpu": 0.0551
+              },
+              "rust-check": {
+                "wall": 0.1804,
+                "cpu": 0.1817
+              },
+              "go-vet": {
+                "wall": 0.0564,
+                "cpu": 0.1265
+              },
+              "zig-check": {
+                "wall": 0.2524,
+                "cpu": 0.2796
+              },
+              "c-check": {
+                "wall": 0.2035,
+                "cpu": 0.2853
+              }
+            },
+            "m40": {
+              "kizu-check": {
+                "wall": 0.2114,
+                "cpu": 0.2111
+              },
+              "rust-check": {
+                "wall": 0.5889,
+                "cpu": 0.5905
+              },
+              "go-vet": {
+                "wall": 0.0712,
+                "cpu": 0.1526
+              },
+              "zig-check": {
+                "wall": 0.3155,
+                "cpu": 0.35
+              },
+              "c-check": {
+                "wall": 0.4926,
+                "cpu": 1.3571
+              }
+            },
+            "m160": {
+              "kizu-check": {
+                "wall": 0.8381,
+                "cpu": 0.8377
+              },
+              "rust-check": {
+                "wall": 2.3585,
+                "cpu": 2.3599
+              },
+              "go-vet": {
+                "wall": 0.1301,
+                "cpu": 0.2549
+              },
+              "zig-check": {
+                "wall": 0.484,
+                "cpu": 0.5481
+              },
+              "c-check": {
+                "wall": 1.5284,
+                "cpu": 5.7492
+              }
+            }
+          }
+        },
+        "cache": {
+          "m10": {
+            "kizu-direct": {
+              "total_bytes": 831121,
+              "project_bytes": 595733,
+              "seed_bytes": 235388,
+              "total_mb": 0.793,
+              "project_mb": 0.568,
+              "seed_mb": 0.224,
+              "files": 8
+            },
+            "kizu-llvm": {
+              "total_bytes": 762745,
+              "project_bytes": 518851,
+              "seed_bytes": 243894,
+              "total_mb": 0.727,
+              "project_mb": 0.495,
+              "seed_mb": 0.233,
+              "files": 38
+            },
+            "rust-debug": {
+              "total_bytes": 5300864,
+              "project_bytes": 5300864,
+              "seed_bytes": 0,
+              "total_mb": 5.055,
+              "project_mb": 5.055,
+              "seed_mb": 0.0,
+              "files": 13
+            },
+            "go-noopt": {
+              "total_bytes": 26772090,
+              "project_bytes": 799388,
+              "seed_bytes": 25972702,
+              "total_mb": 25.532,
+              "project_mb": 0.762,
+              "seed_mb": 24.769,
+              "files": 485
+            },
+            "zig-debug": {
+              "total_bytes": 48321033,
+              "project_bytes": 889175,
+              "seed_bytes": 47431858,
+              "total_mb": 46.083,
+              "project_mb": 0.848,
+              "seed_mb": 45.235,
+              "files": 717
+            },
+            "c-O0": {
+              "total_bytes": 150232,
+              "project_bytes": 150232,
+              "seed_bytes": 0,
+              "total_mb": 0.143,
+              "project_mb": 0.143,
+              "seed_mb": 0.0,
+              "files": 11
+            },
+            "kizu-direct-opt": {
+              "total_bytes": 782574,
+              "project_bytes": 571574,
+              "seed_bytes": 211000,
+              "total_mb": 0.746,
+              "project_mb": 0.545,
+              "seed_mb": 0.201,
+              "files": 8
+            },
+            "kizu-llvm-opt": {
+              "total_bytes": 317256,
+              "project_bytes": 108597,
+              "seed_bytes": 208659,
+              "total_mb": 0.303,
+              "project_mb": 0.104,
+              "seed_mb": 0.199,
+              "files": 6
+            },
+            "rust-release": {
+              "total_bytes": 495670,
+              "project_bytes": 495670,
+              "seed_bytes": 0,
+              "total_mb": 0.473,
+              "project_mb": 0.473,
+              "seed_mb": 0.0,
+              "files": 13
+            },
+            "go": {
+              "total_bytes": 32556204,
+              "project_bytes": 986376,
+              "seed_bytes": 31569828,
+              "total_mb": 31.048,
+              "project_mb": 0.941,
+              "seed_mb": 30.107,
+              "files": 485
+            },
+            "zig-fast": {
+              "total_bytes": 48262517,
+              "project_bytes": 889175,
+              "seed_bytes": 47373342,
+              "total_mb": 46.027,
+              "project_mb": 0.848,
+              "seed_mb": 45.179,
+              "files": 716
+            },
+            "c-O2": {
+              "total_bytes": 102672,
+              "project_bytes": 102672,
+              "seed_bytes": 0,
+              "total_mb": 0.098,
+              "project_mb": 0.098,
+              "seed_mb": 0.0,
+              "files": 11
+            }
+          },
+          "m40": {
+            "kizu-direct": {
+              "total_bytes": 2243373,
+              "project_bytes": 2007985,
+              "seed_bytes": 235388,
+              "total_mb": 2.139,
+              "project_mb": 1.915,
+              "seed_mb": 0.224,
+              "files": 8
+            },
+            "kizu-llvm": {
+              "total_bytes": 1921199,
+              "project_bytes": 1677305,
+              "seed_bytes": 243894,
+              "total_mb": 1.832,
+              "project_mb": 1.6,
+              "seed_mb": 0.233,
+              "files": 98
+            },
+            "rust-debug": {
+              "total_bytes": 7684714,
+              "project_bytes": 7684714,
+              "seed_bytes": 0,
+              "total_mb": 7.329,
+              "project_mb": 7.329,
+              "seed_mb": 0.0,
+              "files": 13
+            },
+            "go-noopt": {
+              "total_bytes": 29176290,
+              "project_bytes": 3203588,
+              "seed_bytes": 25972702,
+              "total_mb": 27.825,
+              "project_mb": 3.055,
+              "seed_mb": 24.769,
+              "files": 695
+            },
+            "zig-debug": {
+              "total_bytes": 50986713,
+              "project_bytes": 3554855,
+              "seed_bytes": 47431858,
+              "total_mb": 48.625,
+              "project_mb": 3.39,
+              "seed_mb": 45.235,
+              "files": 747
+            },
+            "c-O0": {
+              "total_bytes": 597336,
+              "project_bytes": 597336,
+              "seed_bytes": 0,
+              "total_mb": 0.57,
+              "project_mb": 0.57,
+              "seed_mb": 0.0,
+              "files": 41
+            },
+            "kizu-direct-opt": {
+              "total_bytes": 2173674,
+              "project_bytes": 1962674,
+              "seed_bytes": 211000,
+              "total_mb": 2.073,
+              "project_mb": 1.872,
+              "seed_mb": 0.201,
+              "files": 8
+            },
+            "kizu-llvm-opt": {
+              "total_bytes": 322027,
+              "project_bytes": 113368,
+              "seed_bytes": 208659,
+              "total_mb": 0.307,
+              "project_mb": 0.108,
+              "seed_mb": 0.199,
+              "files": 6
+            },
+            "rust-release": {
+              "total_bytes": 603032,
+              "project_bytes": 603032,
+              "seed_bytes": 0,
+              "total_mb": 0.575,
+              "project_mb": 0.575,
+              "seed_mb": 0.0,
+              "files": 13
+            },
+            "go": {
+              "total_bytes": 35522904,
+              "project_bytes": 3953076,
+              "seed_bytes": 31569828,
+              "total_mb": 33.877,
+              "project_mb": 3.77,
+              "seed_mb": 30.107,
+              "files": 695
+            },
+            "zig-fast": {
+              "total_bytes": 50928197,
+              "project_bytes": 3554855,
+              "seed_bytes": 47373342,
+              "total_mb": 48.569,
+              "project_mb": 3.39,
+              "seed_mb": 45.179,
+              "files": 746
+            },
+            "c-O2": {
+              "total_bytes": 406960,
+              "project_bytes": 406960,
+              "seed_bytes": 0,
+              "total_mb": 0.388,
+              "project_mb": 0.388,
+              "seed_mb": 0.0,
+              "files": 41
+            }
+          },
+          "m160": {
+            "kizu-direct": {
+              "total_bytes": 7902287,
+              "project_bytes": 7666899,
+              "seed_bytes": 235388,
+              "total_mb": 7.536,
+              "project_mb": 7.312,
+              "seed_mb": 0.224,
+              "files": 8
+            },
+            "kizu-llvm": {
+              "total_bytes": 6557359,
+              "project_bytes": 6313465,
+              "seed_bytes": 243894,
+              "total_mb": 6.254,
+              "project_mb": 6.021,
+              "seed_mb": 0.233,
+              "files": 338
+            },
+            "rust-debug": {
+              "total_bytes": 17201602,
+              "project_bytes": 17201602,
+              "seed_bytes": 0,
+              "total_mb": 16.405,
+              "project_mb": 16.405,
+              "seed_mb": 0.0,
+              "files": 13
+            },
+            "go-noopt": {
+              "total_bytes": 38804092,
+              "project_bytes": 12831390,
+              "seed_bytes": 25972702,
+              "total_mb": 37.006,
+              "project_mb": 12.237,
+              "seed_mb": 24.769,
+              "files": 1535
+            },
+            "zig-debug": {
+              "total_bytes": 61649613,
+              "project_bytes": 14217755,
+              "seed_bytes": 47431858,
+              "total_mb": 58.794,
+              "project_mb": 13.559,
+              "seed_mb": 45.235,
+              "files": 867
+            },
+            "c-O0": {
+              "total_bytes": 2385912,
+              "project_bytes": 2385912,
+              "seed_bytes": 0,
+              "total_mb": 2.275,
+              "project_mb": 2.275,
+              "seed_mb": 0.0,
+              "files": 161
+            },
+            "kizu-direct-opt": {
+              "total_bytes": 7752018,
+              "project_bytes": 7541018,
+              "seed_bytes": 211000,
+              "total_mb": 7.393,
+              "project_mb": 7.192,
+              "seed_mb": 0.201,
+              "files": 8
+            },
+            "kizu-llvm-opt": {
+              "total_bytes": 341289,
+              "project_bytes": 132630,
+              "seed_bytes": 208659,
+              "total_mb": 0.325,
+              "project_mb": 0.126,
+              "seed_mb": 0.199,
+              "files": 6
+            },
+            "rust-release": {
+              "total_bytes": 626680,
+              "project_bytes": 626680,
+              "seed_bytes": 0,
+              "total_mb": 0.598,
+              "project_mb": 0.598,
+              "seed_mb": 0.0,
+              "files": 13
+            },
+            "go": {
+              "total_bytes": 47403524,
+              "project_bytes": 15833696,
+              "seed_bytes": 31569828,
+              "total_mb": 45.208,
+              "project_mb": 15.1,
+              "seed_mb": 30.107,
+              "files": 1535
+            },
+            "zig-fast": {
+              "total_bytes": 61591097,
+              "project_bytes": 14217755,
+              "seed_bytes": 47373342,
+              "total_mb": 58.738,
+              "project_mb": 13.559,
+              "seed_mb": 45.179,
+              "files": 866
+            },
+            "c-O2": {
+              "total_bytes": 1624080,
+              "project_bytes": 1624080,
+              "seed_bytes": 0,
+              "total_mb": 1.549,
+              "project_mb": 1.549,
+              "seed_mb": 0.0,
+              "files": 161
+            }
+          }
+        },
+        "rss_mb": {
+          "kizu-direct": 337.8,
+          "kizu-direct-opt": 337.5,
+          "kizu-llvm": 337.5,
+          "kizu-llvm-opt": 337.6,
+          "rust-debug": 558.7,
+          "rust-release": 520.8,
+          "go": 26.2,
+          "go-noopt": 24.6,
+          "zig-debug": 229.6,
+          "zig-fast": 655.8,
+          "c-O0": 86.7,
+          "c-O2": 96.0
+        },
+        "rss_by_size": {
+          "m10": {
+            "kizu-direct": 68.3,
+            "kizu-direct-opt": 68.2,
+            "kizu-llvm": 75.9,
+            "kizu-llvm-opt": 95.4,
+            "rust-debug": 132.7,
+            "rust-release": 140.6,
+            "go": 25.7,
+            "go-noopt": 23.8,
+            "zig-debug": 137.1,
+            "zig-fast": 382.8,
+            "c-O0": 86.7,
+            "c-O2": 95.8
+          },
+          "m40": {
+            "kizu-direct": 104.6,
+            "kizu-direct-opt": 105.4,
+            "kizu-llvm": 104.3,
+            "kizu-llvm-opt": 134.6,
+            "rust-debug": 220.0,
+            "rust-release": 213.8,
+            "go": 25.8,
+            "go-noopt": 24.3,
+            "zig-debug": 157.2,
+            "zig-fast": 432.1,
+            "c-O0": 86.7,
+            "c-O2": 95.8
+          },
+          "m160": {
+            "kizu-direct": 337.8,
+            "kizu-direct-opt": 337.5,
+            "kizu-llvm": 337.5,
+            "kizu-llvm-opt": 337.6,
+            "rust-debug": 558.7,
+            "rust-release": 520.8,
+            "go": 26.2,
+            "go-noopt": 24.6,
+            "zig-debug": 229.6,
+            "zig-fast": 655.8,
+            "c-O0": 86.7,
+            "c-O2": 96.0
+          }
+        }
+      },
+      "real": []
+    },
+    {
       "id": "2026-11-17-ryzen9700x-wsl2-515c7b8",
       "kind": "compare",
       "machine_group": "AMD Ryzen 7 9700X 8-Core Processor (Linux x86_64 WSL2)",
