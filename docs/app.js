@@ -37,6 +37,7 @@
 
   const state = {
     data: null,
+    envGroup: null,
     runId: null,
     rtView: "geomean",
     rtScope: "base",
@@ -80,7 +81,6 @@
 
   function fmtMb(mb) {
     if (mb === null || mb === undefined) return "—";
-    if (mb < 10) return mb.toFixed(1) + " MB";
     if (mb < 100) return mb.toFixed(1) + " MB";
     return Math.round(mb) + " MB";
   }
@@ -95,19 +95,35 @@
   function shortCpu(cpu) {
     if (!cpu) return "Unknown CPU";
     return cpu
+      .replace(/^AMD\s+/i, "")
+      .replace(/^Intel\(R\)\s+Core\(TM\)\s+/i, "")
       .replace(/\s+\d+-Core Processor/i, "")
       .replace(/\(R\)|\(TM\)|CPU\s+/g, "")
       .replace(/\s+/g, " ")
       .trim();
   }
 
-  function shortOs(machine) {
-    const osStr = (machine && machine.os) || "";
-    const parts = osStr.split(/\s+/).filter(Boolean);
-    const name = parts[0] || "";
-    const arch = parts.length >= 2 ? parts[parts.length - 1] : "";
-    const virt = (machine && machine.virtualized) || "";
-    return [name, arch, virt].filter(Boolean).join(" ");
+  function shortEnvLabel(group, sampleRun) {
+    if (!group) return "Unknown";
+    const gha = group.match(/^GitHub Actions\s*\(([^)]+)\)$/i);
+    if (gha) {
+      const tag = gha[1]
+        .replace(/linux[- ]x86_64/i, "Linux x64")
+        .replace(/macos[- ]arm64/i, "macOS arm64")
+        .replace(/darwin[- ]arm64/i, "macOS arm64")
+        .replace(/x86_64/i, "x64");
+      return "GHA " + tag;
+    }
+    const m = (sampleRun && sampleRun.machine) || {};
+    const cpu = shortCpu(m.cpu || group.replace(/\s*\([^)]*\)\s*$/, ""));
+    const virt = m.virtualized ? ` · ${m.virtualized}` : "";
+    if (virt) return `${cpu}${virt}`;
+    const paren = group.match(/\(([^)]+)\)/);
+    if (paren) {
+      const bit = paren[1].replace(/x86_64/i, "x64").replace(/Darwin/i, "macOS");
+      return `${cpu} · ${bit}`;
+    }
+    return cpu;
   }
 
   function shortDate(run) {
@@ -119,9 +135,23 @@
     return !!(run && run.compile && run.compile.cache && Object.keys(run.compile.cache).length > 0);
   }
 
+  function envGroupsList() {
+    const map = new Map();
+    state.data.runs.forEach((r) => {
+      if (!map.has(r.machine_group)) map.set(r.machine_group, []);
+      map.get(r.machine_group).push(r);
+    });
+    return Array.from(map.entries()).map(([group, runs]) => ({ group, runs }));
+  }
+
+  function runsForEnv(group) {
+    return state.data.runs.filter((r) => r.machine_group === group);
+  }
+
   function currentRun() {
     if (!state.data || !state.data.runs.length) return null;
-    return state.data.runs.find((r) => r.id === state.runId) || state.data.runs[0];
+    const inEnv = runsForEnv(state.envGroup);
+    return inEnv.find((r) => r.id === state.runId) || inEnv[0] || state.data.runs[0];
   }
 
   function sameHostRuns(run) {
@@ -262,12 +292,13 @@
     }
 
     let xAxis = "";
-    const maxLabels = 6;
-    const step = Math.max(1, Math.ceil(xLabels.length / maxLabels));
+    const labelStep = Math.max(1, Math.ceil(xLabels.length / 6));
     xLabels.forEach((lbl, i) => {
-      if (i !== 0 && i !== xLabels.length - 1 && i % step !== 0) return;
+      const isLast = i === xLabels.length - 1;
+      const show = i === 0 || isLast || (i % labelStep === 0 && xLabels.length - 1 - i >= Math.ceil(labelStep / 2));
+      if (!show) return;
       const x = xAt(i);
-      const anchor = xLabels.length > 1 && i === 0 ? "start" : xLabels.length > 1 && i === xLabels.length - 1 ? "end" : "middle";
+      const anchor = xLabels.length > 1 && i === 0 ? "start" : xLabels.length > 1 && isLast ? "end" : "middle";
       xAxis += `<text x="${x.toFixed(1)}" y="${height - 7}" text-anchor="${anchor}" fill="#66645c" font-size="10" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">${esc(lbl)}</text>`;
     });
 
@@ -297,30 +328,83 @@
     return `<svg class="trend-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(opts.aria || "Progression chart")}">${grid}${refLine}${selLine}${xAxis}${paths}</svg>`;
   }
 
+  function selectEnvironment(group, targetRunId) {
+    state.envGroup = group;
+    const runs = runsForEnv(group);
+    state.runId = targetRunId && runs.some((r) => r.id === targetRunId) ? targetRunId : (runs[0] ? runs[0].id : null);
+    const run = currentRun();
+    if (run) syncRunDefaults(run);
+    renderEnvSwitcher();
+    populateRunSelect();
+    renderAll();
+  }
+
+  function renderEnvSwitcher() {
+    const container = document.getElementById("env-control");
+    const envs = envGroupsList();
+    if (!state.envGroup && envs.length) {
+      state.envGroup = envs[0].group;
+    }
+
+    if (envs.length <= 3) {
+      const pills = envs
+        .map((e) => {
+          const on = e.group === state.envGroup;
+          const label = shortEnvLabel(e.group, e.runs[0]);
+          const tip = `<strong>${esc(e.group)}</strong><br>${e.runs.length} run${e.runs.length === 1 ? "" : "s"} recorded<br>Isolated host — never mixed with other environments`;
+          return `<button type="button" class="env-pill${on ? " active" : ""}" aria-pressed="${on ? "true" : "false"}" data-env="${esc(e.group)}" data-tip="${esc(tip)}"><span>${esc(label)}</span><span class="env-count">${e.runs.length}</span></button>`;
+        })
+        .join("");
+      container.innerHTML = `<div class="env-pills" role="group" aria-label="Recorded host environments">${pills}</div>`;
+      container.querySelectorAll("[data-env]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const g = btn.getAttribute("data-env");
+          if (g !== state.envGroup) {
+            selectEnvironment(g);
+          }
+        });
+      });
+      bindTips(container);
+    } else {
+      const options = envs
+        .map((e) => {
+          const label = `${shortEnvLabel(e.group, e.runs[0])} (${e.runs.length})`;
+          return `<option value="${esc(e.group)}"${e.group === state.envGroup ? " selected" : ""}>${esc(label)}</option>`;
+        })
+        .join("");
+      container.innerHTML = `<select id="env-select" class="env-select" aria-label="Host environment">${options}</select>`;
+      document.getElementById("env-select").addEventListener("change", (ev) => {
+        selectEnvironment(ev.target.value);
+      });
+    }
+
+    const badge = document.getElementById("iso-badge");
+    const envCount = envs.length;
+    badge.textContent = envCount === 1 ? "host-isolated · never mixed" : `isolated · ${envCount} envs`;
+    badge.setAttribute(
+      "data-tip",
+      `<strong>Strict per-host isolation</strong><br>Showing only <strong>${esc(state.envGroup || "")}</strong>.<br>Different environments (GHA Linux, GHA macOS, local WSL2/macOS, Colab) are switched via Env and never mixed.`
+    );
+    bindTips(badge.parentElement);
+  }
+
   function populateRunSelect() {
     const sel = document.getElementById("run-select");
-    const groups = new Map();
-    state.data.runs.forEach((r) => {
-      if (!groups.has(r.machine_group)) groups.set(r.machine_group, []);
-      groups.get(r.machine_group).push(r);
-    });
+    const runs = runsForEnv(state.envGroup);
     sel.innerHTML = "";
-    groups.forEach((runs, label) => {
-      const og = document.createElement("optgroup");
-      og.label = label;
-      runs.forEach((r) => {
-        const opt = document.createElement("option");
-        opt.value = r.id;
-        const rev = shortKizu(r.machine && r.machine.kizu);
-        opt.textContent = rev && rev !== "—" && !r.id.includes(rev) ? `${r.id} (${rev})` : r.id;
-        og.appendChild(opt);
-      });
-      sel.appendChild(og);
+    runs.forEach((r) => {
+      const opt = document.createElement("option");
+      opt.value = r.id;
+      const rev = shortKizu(r.machine && r.machine.kizu);
+      const date = shortDate(r);
+      opt.textContent = rev && rev !== "—" ? `${date} · ${rev}` : r.id;
+      opt.title = r.id;
+      sel.appendChild(opt);
     });
-    if (!state.runId && state.data.runs.length) {
-      state.runId = state.data.runs[0].id;
+    if ((!state.runId || !runs.some((r) => r.id === state.runId)) && runs.length) {
+      state.runId = runs[0].id;
     }
-    sel.value = state.runId;
+    sel.value = state.runId || "";
   }
 
   function syncRunDefaults(run) {
@@ -338,19 +422,6 @@
     if (state.hiMetric === "ab" && sameHostAb(run).length === 0) {
       state.hiMetric = "runtime";
     }
-  }
-
-  function renderHostChip(run) {
-    const m = run.machine || {};
-    const parts = [
-      `<strong>${esc(shortCpu(m.cpu))}</strong>`,
-      esc(shortOs(m)),
-      `kizu ${esc(shortKizu(m.kizu))}`,
-      esc(shortDate(run))
-    ].filter(Boolean);
-    const chip = document.getElementById("host-chip");
-    chip.innerHTML = parts.join(" &middot; ");
-    chip.title = `${run.machine_group} | ${m.kizu || ""} | ${m.date || ""}`;
   }
 
   function renderKpis(run) {
@@ -724,7 +795,7 @@
       if (!cacheAvailable) {
         const newer = state.data.runs.find((r) => hasCacheData(r));
         const switchBtn = newer
-          ? `<button type="button" class="inline-btn" data-jump-run="${esc(newer.id)}">Open ${esc(newer.id)}</button>`
+          ? `<button type="button" class="inline-btn" data-jump-env="${esc(newer.machine_group)}" data-jump-run="${esc(newer.id)}">Open ${esc(shortEnvLabel(newer.machine_group, newer))}</button>`
           : "";
         body.innerHTML = `<div class="empty-box">
           <div>Build cache size (<code>cache.json</code>) was added in newer runs.</div>
@@ -747,10 +818,7 @@
         const jumpBtn = body.querySelector("[data-jump-run]");
         if (jumpBtn) {
           jumpBtn.addEventListener("click", () => {
-            state.runId = jumpBtn.getAttribute("data-jump-run");
-            document.getElementById("run-select").value = state.runId;
-            syncRunDefaults(currentRun());
-            renderAll();
+            selectEnvironment(jumpBtn.getAttribute("data-jump-env"), jumpBtn.getAttribute("data-jump-run"));
           });
         }
         return;
@@ -881,7 +949,7 @@
       </div>
       <div class="quad-foot">
         <div class="quad-foot-left"><span>${esc(ab.id)}</span></div>
-        <div class="quad-foot-right"><span>same-host isolated</span></div>
+        <div class="quad-foot-right"><span class="foot-pill">same-host only</span></div>
       </div>`;
       bindTips(body);
       return;
@@ -890,6 +958,7 @@
     const selIdx = runs.findIndex((r) => r.id === run.id);
     const xLabels = runs.map((r) => shortKizu(r.machine && r.machine.kizu));
     const tipLabels = runs.map((r) => `${r.id} (${shortDate(r)})`);
+    const envShort = shortEnvLabel(run.machine_group, run);
 
     if (state.hiMetric === "runtime") {
       const candidateKeys = ["kizu-llvm", "kizu-direct", "rust", "c-O2"];
@@ -927,7 +996,7 @@
         })}</div>
       </div>
       <div class="quad-foot">
-        <div class="quad-foot-left"><span>${esc(shortCpu(run.machine && run.machine.cpu))}</span></div>
+        <div class="quad-foot-left"><span>${esc(envShort)}</span></div>
         <div class="quad-foot-right"><span class="foot-pill">hosts never mixed</span></div>
       </div>`;
       bindTips(body);
@@ -972,7 +1041,7 @@
       })}</div>
     </div>
     <div class="quad-foot">
-      <div class="quad-foot-left"><span>${esc(shortCpu(run.machine && run.machine.cpu))}</span></div>
+      <div class="quad-foot-left"><span>${esc(envShort)}</span></div>
       <div class="quad-foot-right"><span class="foot-pill">hosts never mixed</span></div>
     </div>`;
     bindTips(body);
@@ -1001,8 +1070,10 @@
   function openMethodModal(opener) {
     const run = currentRun();
     const m = (run && run.machine) || {};
+    const envs = envGroupsList();
     const fields = [
-      ["Host", run ? run.machine_group : "—"],
+      ["Env Group", run ? run.machine_group : "—"],
+      ["Runner", m.runner],
       ["Run ID", run ? run.id : "—"],
       ["Date", m.date],
       ["CPU", m.cpu],
@@ -1020,7 +1091,28 @@
       .map(([k, v]) => `<div class="kv-row"><span class="kv-key">${esc(k)}</span><span class="kv-val">${esc(v)}</span></div>`)
       .join("");
 
+    const envRows = envs
+      .map(
+        (e) => `<tr>
+          <td><button type="button" class="run-row-btn" data-pick-env="${esc(e.group)}">${esc(e.group)}</button></td>
+          <td>${e.runs.length}</td>
+          <td>${esc(shortDate(e.runs[0]))}</td>
+          <td>${e.group === state.envGroup ? "active" : "—"}</td>
+        </tr>`
+      )
+      .join("");
+
     const html = `
+      <div class="modal-section">
+        <h3>Recorded Environments (${envs.length})</h3>
+        <p class="modal-note">Benchmarks from different hosts (GitHub Actions Linux x86_64, GitHub Actions macOS arm64, local Linux/WSL2, Colab, etc.) are strictly isolated and never averaged or plotted together.</p>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead><tr><th>Environment</th><th>Runs</th><th>Latest</th><th>Status</th></tr></thead>
+            <tbody>${envRows}</tbody>
+          </table>
+        </div>
+      </div>
       <div class="modal-section">
         <h3>Methodology &amp; Fairness</h3>
         <div class="method-grid">
@@ -1046,7 +1138,13 @@
         <h3>Selected Run Environment</h3>
         <div class="kv-grid">${kvHtml}</div>
       </div>`;
-    openModal("Methodology & Environment", "Reproducible comparison rules and active host metadata", html, opener);
+    openModal("Methodology & Environments", "Strict per-host isolation and active run metadata", html, opener);
+    modalBody.querySelectorAll("[data-pick-env]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectEnvironment(btn.getAttribute("data-pick-env"));
+        closeModal();
+      });
+    });
   }
 
   function openRuntimeModal(opener) {
@@ -1380,7 +1478,6 @@
   function renderAll() {
     const run = currentRun();
     if (!run) return;
-    renderHostChip(run);
     renderKpis(run);
     renderRuntime(run);
     renderCompile(run);
@@ -1396,6 +1493,10 @@
   });
 
   document.getElementById("btn-method").addEventListener("click", (e) => {
+    openMethodModal(e.currentTarget);
+  });
+
+  document.getElementById("iso-badge").addEventListener("click", (e) => {
     openMethodModal(e.currentTarget);
   });
 
@@ -1436,10 +1537,10 @@
     })
     .then((data) => {
       state.data = data;
-      populateRunSelect();
-      const run = currentRun();
-      if (run) syncRunDefaults(run);
-      renderAll();
+      const envs = envGroupsList();
+      if (envs.length) {
+        selectEnvironment(envs[0].group, envs[0].runs[0] ? envs[0].runs[0].id : null);
+      }
     })
     .catch((err) => {
       document.getElementById("body-runtime").innerHTML = `<div class="empty-box">Failed to load <code>data.json</code>: ${esc(err.message)}</div>`;

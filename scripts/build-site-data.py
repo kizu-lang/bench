@@ -43,12 +43,21 @@ def parse_machine(path):
     return info
 
 
-def machine_group_label(machine):
-    cpu = machine.get("cpu", "Unknown CPU")
+def machine_group_label(machine, run_id=""):
     os_str = machine.get("os", "")
     parts = os_str.split()
-    os_name = parts[0] if parts else "Unknown"
+    os_name = parts[0] if parts else ""
     arch = parts[-1] if len(parts) >= 2 else ""
+    if machine.get("runner") == "GitHub Actions" or "-gha-" in run_id:
+        pretty_os = "macOS" if os_name == "Darwin" else os_name
+        if pretty_os and arch:
+            return f"GitHub Actions ({pretty_os} {arch})"
+        if "-gha-" in run_id:
+            target = run_id.split("-gha-", 1)[1]
+            return f"GitHub Actions ({target})"
+        return "GitHub Actions"
+    cpu = machine.get("cpu", "Unknown CPU")
+    os_name = os_name or "Unknown"
     virt = machine.get("virtualized", "")
     env_bits = [x for x in [os_name, arch, virt] if x]
     if env_bits:
@@ -322,7 +331,7 @@ def parse_ab(run_dir, run_id):
         )
     return {
         "id": run_id,
-        "machine_group": machine_group_label(machine),
+        "machine_group": machine_group_label(machine, run_id),
         "machine": machine,
         "input": inp,
         "revs": rows,
@@ -386,7 +395,7 @@ def build_data():
                 {
                     "id": name,
                     "kind": "compare",
-                    "machine_group": machine_group_label(machine),
+                    "machine_group": machine_group_label(machine, name),
                     "machine": machine,
                     "runtime": rt,
                     "compile": cp,

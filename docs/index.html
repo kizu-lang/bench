@@ -17,16 +17,20 @@
           <span class="brand-sep">/</span>
           <h1 class="brand-title">bench</h1>
         </div>
-        <div class="run-picker">
-          <label for="run-select" class="sr-only">Machine and benchmark run</label>
-          <select id="run-select" class="run-select" aria-label="Machine and benchmark run"></select>
+        <div class="switcher-group" aria-label="Environment switcher">
+          <span class="switcher-label">Env</span>
+          <div id="env-control" class="env-control"></div>
         </div>
-        <div id="host-chip" class="host-chip" title=""></div>
+        <div class="switcher-group" aria-label="Run selector">
+          <label for="run-select" class="switcher-label">Run</label>
+          <select id="run-select" class="run-select" aria-label="Benchmark run for selected environment"></select>
+        </div>
+        <button id="iso-badge" type="button" class="iso-badge"></button>
       </div>
       <nav class="topbar-right" aria-label="Links and methodology">
         <a href="https://github.com/kizu-lang/kizu" target="_blank" rel="noopener">kizu</a>
         <a href="https://github.com/kizu-lang/bench" target="_blank" rel="noopener">bench</a>
-        <a href="https://github.com/kizu-lang/kizu/discussions" target="_blank" rel="noopener">Discussions</a>
+        <a href="https://github.com/kizu-lang/bench/discussions" target="_blank" rel="noopener">Discussions</a>
         <a href="https://github.com/kizu-lang/bench/tree/main/results" target="_blank" rel="noopener">Raw</a>
         <button id="btn-method" type="button" class="topbar-btn">Method</button>
       </nav>
