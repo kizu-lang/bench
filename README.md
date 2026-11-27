@@ -4,6 +4,7 @@ Kizu の compiler と、それが出すコードの速さ・build cache サイ�
 数値より先に、比べ方が公平かどうかを読めるようにしてあります。
 
 - ダッシュボード: [https://kizu-lang.github.io/bench/](https://kizu-lang.github.io/bench/)
+- Discussions: [https://github.com/kizu-lang/bench/discussions](https://github.com/kizu-lang/bench/discussions)（質問・不具合報告・アイデアはこちらへ。外部からの PR・issue は受け付けていません）
 - 結果一覧: `results/<label>/README.md`
 
 ## 測るもの
@@ -51,6 +52,7 @@ KIZU=../kizu/target/release/kizu REUSE=2026-11-17-mymachine just compare 2026-11
 
 - `results/<label>/README.md`: 各 run の表と `machine.txt`
 - `docs/`: GitHub Pages (`https://kizu-lang.github.io/bench/`) 向けの静的ダッシュボード(外部 CDN なし)
+- 日次自動計測: `.github/workflows/bench-daily.yml` が毎日 1 回(`ubuntu-latest` `linux-x86_64` と `macos-15` `macos-arm64`)実行し、`results/*-gha-*`（各ターゲット最新 30 回分を保持）と `docs/data.json` を自動更新する。専用マシンの結果とはホスト別に分離して表示する。
 
 ## License
 

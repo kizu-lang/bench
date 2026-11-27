@@ -9,8 +9,14 @@ mkdir -p "$out"
   if [ "$(uname)" = Darwin ]; then
     echo "cpu: $(sysctl -n machdep.cpu.brand_string)"
   else
-    echo "cpu: $(grep -m1 'model name' /proc/cpuinfo | cut -d: -f2- | sed 's/^ //')"
-    grep -qi microsoft /proc/version && echo "virtualized: WSL2"
+    cpu_model=$(grep -m1 'model name' /proc/cpuinfo 2>/dev/null | cut -d: -f2- | sed 's/^ //' || true)
+    echo "cpu: ${cpu_model:-$(uname -m)}"
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+      echo "virtualized: WSL2"
+    fi
+  fi
+  if [ "${GITHUB_ACTIONS:-}" = "true" ]; then
+    echo "runner: GitHub Actions"
   fi
   echo "cores: $NPROC"
   echo "load: $(uptime | sed 's/.*load average[s]*: //')"
