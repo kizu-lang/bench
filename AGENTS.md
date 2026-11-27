@@ -8,8 +8,8 @@
 
 ## Repository Policy & Automation
 
-- `kizu-lang/bench` is public and maintained solely by the author (`CONTRIBUTING.md`, `.github/ISSUE_TEMPLATE/config.yml`, `.github/workflows/contribution-guard.yml`). External feedback belongs in GitHub Discussions.
-- `.github/workflows/bench-daily.yml` runs once daily (`17 19 * * *` UTC) on `ubuntu-latest` (`linux-x86_64`) and `macos-15` (`macos-arm64`), prunes old CI runs via `scripts/prune-ci-results.py` (keeping the latest 30 per CI target), regenerates `docs/data.json`, and publishes to `main`.
+- `kizu-lang/bench` is public and maintained solely by the author (`CONTRIBUTING.md`, `.github/ISSUE_TEMPLATE/config.yml`). Pull request and issue creation is restricted to collaborators natively on GitHub (`COLLABORATORS_ONLY`), and external feedback belongs in GitHub Discussions.
+- `.github/workflows/bench-daily.yml` is the only workflow; it runs once daily (`17 19 * * *` UTC) on `ubuntu-latest` (`linux-x86_64`) and `macos-15` (`macos-arm64`), prunes old CI runs via `scripts/prune-ci-results.py` (keeping the latest 30 per CI target), regenerates `docs/data.json`, and publishes to `main`.
 - Pin all GitHub Actions in workflows to full 40-character commit SHAs and verify downloaded release artifacts against SHA-256 before extraction.
 
 ## Code Style

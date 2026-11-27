@@ -2,8 +2,8 @@
 
 Thank you for your interest in `kizu-lang/bench`.
 
-This repository is maintained solely by the author, so external pull requests
-and issues are not accepted and are automatically closed and locked.
+This repository is maintained solely by the author, and pull request and issue
+creation is restricted to maintainers on GitHub.
 
 ## Feedback, bug reports, and ideas
 
