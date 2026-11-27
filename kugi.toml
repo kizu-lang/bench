@@ -1,0 +1,47 @@
+[store]
+max_size = "4GB"
+
+[tools.kizu]
+github = "kizu-lang/kizu"
+version = "0.10.0"
+tag = "v{version}"
+asset = "kizu-v{version}-{os}-{arch}.tar.gz"
+arch_map = { aarch64 = "arm64", x86_64 = "amd64" }
+extract = "all"
+bin = ["bin/kizu"]
+
+[tools.zig]
+version = "0.17.1"
+url = "https://ziglang.org/download/{version}/zig-{arch}-{os}-{version}.tar.xz"
+os_map = { darwin = "macos", linux = "linux" }
+extract = "all"
+bin = ["zig"]
+
+[tools.go]
+version = "1.27.4"
+url = "https://dl.google.com/go/go{version}.{os}-{arch}.tar.gz"
+arch_map = { aarch64 = "arm64", x86_64 = "amd64" }
+extract = "all"
+bin = ["bin/go", "bin/gofmt"]
+
+[tools.hyperfine]
+github = "sharkdp/hyperfine"
+version = "2.0.0"
+tag = "v{version}"
+asset = "hyperfine-v{version}-{arch}-{os}.tar.gz"
+os_map = { darwin = "apple-darwin", linux = "unknown-linux-musl" }
+bin = ["hyperfine"]
+
+[tools.just]
+github = "casey/just"
+version = "1.59.0"
+tag = "{version}"
+asset = "just-{version}-{arch}-{os}.tar.gz"
+os_map = { darwin = "apple-darwin", linux = "unknown-linux-musl" }
+bin = ["just"]
+
+[env]
+CC = "clang"
+KIZU_LIB_DIR = "{tool.kizu}/lib/kizu"
+ZIG_LIB_DIR = "{tool.zig}/lib"
+GOROOT = "{tool.go}"

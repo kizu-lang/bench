@@ -1,0 +1,208 @@
+#!/usr/bin/env python3
+import pathlib
+import sys
+import tokenize
+
+
+def scan_python(path):
+    errors = []
+    with path.open("rb") as f:
+        try:
+            for tok in tokenize.tokenize(f.readline):
+                if tok.type == tokenize.COMMENT:
+                    if tok.start[0] == 1 and tok.string.startswith("#!"):
+                        continue
+                    errors.append(f"{path}:{tok.start[0]}: comment is forbidden")
+        except tokenize.TokenError as exc:
+            errors.append(f"{path}:1: tokenize error: {exc}")
+    return errors
+
+
+def scan_shell(path, text):
+    errors = []
+    in_single = False
+    in_double = False
+    for lineno, line in enumerate(text.splitlines(), 1):
+        if lineno == 1 and line.startswith("#!"):
+            continue
+        i = 0
+        n = len(line)
+        while i < n:
+            ch = line[i]
+            if ch == "\\" and not in_single:
+                i += 2
+                continue
+            if ch == "'" and not in_double:
+                in_single = not in_single
+                i += 1
+                continue
+            if ch == '"' and not in_single:
+                in_double = not in_double
+                i += 1
+                continue
+            if ch == "#" and not in_single and not in_double:
+                prev = line[i - 1] if i > 0 else " "
+                if prev in (" ", "\t", ";", "(", ")"):
+                    errors.append(f"{path}:{lineno}: comment is forbidden")
+                    break
+            i += 1
+    return errors
+
+
+def scan_c_like(path, text, allow_line_slash=True):
+    errors = []
+    line = 1
+    i = 0
+    n = len(text)
+    in_double = False
+    in_single = False
+    in_template = False
+    suffix = path.suffix
+    while i < n:
+        ch = text[i]
+        nxt = text[i + 1] if i + 1 < n else ""
+        if ch == "\n":
+            line += 1
+            i += 1
+            continue
+        if in_double:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == '"':
+                in_double = False
+            i += 1
+            continue
+        if in_single:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == "'":
+                in_single = False
+            i += 1
+            continue
+        if in_template:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == "`":
+                in_template = False
+            i += 1
+            continue
+        if ch == '"':
+            in_double = True
+            i += 1
+            continue
+        if suffix in (".js", ".css") and ch == "'":
+            in_single = True
+            i += 1
+            continue
+        if suffix == ".js" and ch == "`":
+            in_template = True
+            i += 1
+            continue
+        if suffix == ".js" and ch == "/" and nxt not in ("/", "*"):
+            prev = text[:i].rstrip()
+            if prev.endswith(("(", "=", ",", ":", "?", "!", "[", "{", ";", "return")):
+                i += 1
+                in_class = False
+                while i < n and text[i] != "\n":
+                    if text[i] == "\\":
+                        i += 2
+                        continue
+                    if text[i] == "[":
+                        in_class = True
+                    elif text[i] == "]":
+                        in_class = False
+                    elif text[i] == "/" and not in_class:
+                        i += 1
+                        break
+                    i += 1
+                continue
+        if allow_line_slash and ch == "/" and nxt == "/":
+            errors.append(f"{path}:{line}: comment is forbidden")
+            while i < n and text[i] != "\n":
+                i += 1
+            continue
+        if ch == "/" and nxt == "*":
+            errors.append(f"{path}:{line}: block comment is forbidden")
+            end = text.find("*/", i + 2)
+            if end < 0:
+                break
+            line += text[i : end + 2].count("\n")
+            i = end + 2
+            continue
+        i += 1
+    return errors
+
+
+def scan_html(path, text):
+    errors = []
+    idx = 0
+    while True:
+        pos = text.find("<!--", idx)
+        if pos < 0:
+            break
+        line = text[:pos].count("\n") + 1
+        errors.append(f"{path}:{line}: HTML comment is forbidden")
+        end = text.find("-->", pos + 4)
+        if end < 0:
+            break
+        idx = end + 3
+    return errors
+
+
+def main():
+    root = pathlib.Path(__file__).resolve().parent.parent
+    targets = [
+        root / "runtime" / "rust",
+        root / "runtime" / "kizu",
+        root / "compile",
+        root / "docs",
+        root / "scripts" / "all.sh",
+        root / "scripts" / "build-runtime.sh",
+        root / "scripts" / "build-site-data.py",
+        root / "scripts" / "check.sh",
+        root / "scripts" / "comment-lint",
+        root / "scripts" / "common.sh",
+        root / "scripts" / "compile-bench.sh",
+        root / "scripts" / "dir-size.py",
+        root / "scripts" / "machine-info.sh",
+        root / "scripts" / "real-code.sh",
+        root / "scripts" / "report.py",
+        root / "scripts" / "reuse.py",
+        root / "scripts" / "run-runtime.sh",
+        root / "justfile",
+    ]
+    files = []
+    for t in targets:
+        if t.is_file():
+            files.append(t)
+        elif t.is_dir():
+            for p in sorted(t.rglob("*")):
+                if p.is_file():
+                    files.append(p)
+    errors = []
+    for path in files:
+        rel = path.relative_to(root)
+        suffix = path.suffix
+        if suffix == ".py" or path.name == "comment-lint":
+            errors.extend(scan_python(path))
+        elif suffix == ".sh" or path.name == "justfile":
+            errors.extend(scan_shell(rel, path.read_text(encoding="utf-8")))
+        elif suffix in (".rs", ".kizu", ".js"):
+            errors.extend(scan_c_like(rel, path.read_text(encoding="utf-8"), True))
+        elif suffix == ".css":
+            errors.extend(scan_c_like(rel, path.read_text(encoding="utf-8"), False))
+        elif suffix == ".html":
+            errors.extend(scan_html(rel, path.read_text(encoding="utf-8")))
+    if errors:
+        for err in errors:
+            sys.stderr.write(f"comment-lint: {err}\n")
+        return 1
+    print(f"comment-lint: ok ({len(files)} files)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
