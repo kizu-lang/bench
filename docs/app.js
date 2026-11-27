@@ -2,46 +2,65 @@
   "use strict";
 
   const COLORS = {
-    "kizu-llvm": "#0f766e",
-    "kizu-llvm-opt": "#0f766e",
-    "kizu-direct": "#14b8a6",
-    "kizu-direct-opt": "#0d9488",
-    "kizu-check": "#0f766e",
-    "rust": "#c2410c",
-    "rust-native": "#ea580c",
-    "rust-debug": "#ea580c",
-    "rust-release": "#c2410c",
-    "rust-check": "#c2410c",
-    "c-O2": "#334155",
-    "c-O0": "#64748b",
-    "c-O3native": "#475569",
-    "c-check": "#334155",
-    "zig-fast": "#b45309",
-    "zig-safe": "#d97706",
-    "zig-debug": "#d97706",
-    "zig-check": "#b45309",
-    "go": "#0284c7",
-    "go-nobounds": "#38bdf8",
-    "go-noopt": "#38bdf8",
-    "go-vet": "#0284c7"
+    "kizu-llvm": "#e84800",
+    "kizu-llvm-opt": "#e84800",
+    "kizu-check": "#e84800",
+    "kizu-direct": "#1d4ed8",
+    "kizu-direct-opt": "#1d4ed8",
+    "rust": "#b45309",
+    "rust-native": "#c96a1b",
+    "rust-debug": "#b45309",
+    "rust-release": "#92400e",
+    "rust-check": "#b45309",
+    "c-O2": "#4b5563",
+    "c-O0": "#6b7280",
+    "c-O3native": "#374151",
+    "c-check": "#4b5563",
+    "zig-fast": "#6d7a58",
+    "zig-safe": "#859171",
+    "zig-debug": "#6d7a58",
+    "zig-check": "#6d7a58",
+    "go": "#2d7a88",
+    "go-nobounds": "#4e96a3",
+    "go-noopt": "#4e96a3",
+    "go-vet": "#2d7a88"
+  };
+
+  const PROG_SHORT = {
+    fib: "fib",
+    sieve: "sieve",
+    matmul: "mat",
+    collatz: "col",
+    nbody: "nbody",
+    binarytrees: "bt"
   };
 
   const state = {
     data: null,
+    envGroup: null,
     runId: null,
-    tab: "runtime",
-    runtimeProg: "geomean",
-    compileScenario: "cold",
-    compileSize: "m160",
-    compileGroup: "all",
-    cacheSize: "m160",
-    cacheMode: "total"
+    rtView: "geomean",
+    rtScope: "base",
+    cpSize: "m160",
+    cpPhase: "cold",
+    caMode: "rss",
+    caSize: "m160",
+    caField: "total_mb",
+    hiMetric: "runtime",
+    modalOpener: null,
+    modalOpenedAt: 0,
+    backdropDown: false
   };
 
   const tooltip = document.getElementById("tooltip");
+  const modalBackdrop = document.getElementById("modal-backdrop");
+  const modalTitle = document.getElementById("modal-title");
+  const modalSub = document.getElementById("modal-sub");
+  const modalBody = document.getElementById("modal-body");
+  const modalClose = document.getElementById("modal-close");
 
   function colorOf(name) {
-    return COLORS[name] || "#64748b";
+    return COLORS[name] || "#6b7280";
   }
 
   function esc(str) {
@@ -52,6 +71,106 @@
       .replace(/"/g, "&quot;");
   }
 
+  function fmtSec(sec) {
+    if (sec === null || sec === undefined) return "—";
+    if (sec < 0.01) return (sec * 1000).toFixed(1) + "ms";
+    if (sec < 1) return Math.round(sec * 1000) + "ms";
+    if (sec < 10) return sec.toFixed(2) + "s";
+    return sec.toFixed(1) + "s";
+  }
+
+  function fmtMb(mb) {
+    if (mb === null || mb === undefined) return "—";
+    if (mb < 100) return mb.toFixed(1) + " MB";
+    return Math.round(mb) + " MB";
+  }
+
+  function shortKizu(str) {
+    if (!str) return "—";
+    const m = str.match(/kizu\s+([^\s]+)\s+\(([0-9a-f]+)/);
+    if (m) return m[1] === "devel" ? m[2].slice(0, 7) : m[1];
+    return str.replace(/^kizu\s+/, "");
+  }
+
+  function shortCpu(cpu) {
+    if (!cpu) return "Unknown CPU";
+    return cpu
+      .replace(/^AMD\s+/i, "")
+      .replace(/^Intel\(R\)\s+Core\(TM\)\s+/i, "")
+      .replace(/\s+\d+-Core Processor/i, "")
+      .replace(/\(R\)|\(TM\)|CPU\s+/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function shortEnvLabel(group, sampleRun) {
+    if (!group) return "Unknown";
+    const gha = group.match(/^GitHub Actions\s*\(([^)]+)\)$/i);
+    if (gha) {
+      const tag = gha[1]
+        .replace(/linux[- ]x86_64/i, "Linux x64")
+        .replace(/macos[- ]arm64/i, "macOS arm64")
+        .replace(/darwin[- ]arm64/i, "macOS arm64")
+        .replace(/x86_64/i, "x64");
+      return "GHA " + tag;
+    }
+    const m = (sampleRun && sampleRun.machine) || {};
+    const cpu = shortCpu(m.cpu || group.replace(/\s*\([^)]*\)\s*$/, ""));
+    const virt = m.virtualized ? ` · ${m.virtualized}` : "";
+    if (virt) return `${cpu}${virt}`;
+    const paren = group.match(/\(([^)]+)\)/);
+    if (paren) {
+      const bit = paren[1].replace(/x86_64/i, "x64").replace(/Darwin/i, "macOS");
+      return `${cpu} · ${bit}`;
+    }
+    return cpu;
+  }
+
+  function shortDate(run) {
+    const d = (run.machine && run.machine.date) || run.id || "";
+    return d.slice(0, 10);
+  }
+
+  function hasCacheData(run) {
+    return !!(run && run.compile && run.compile.cache && Object.keys(run.compile.cache).length > 0);
+  }
+
+  function envGroupsList() {
+    const map = new Map();
+    state.data.runs.forEach((r) => {
+      if (!map.has(r.machine_group)) map.set(r.machine_group, []);
+      map.get(r.machine_group).push(r);
+    });
+    return Array.from(map.entries()).map(([group, runs]) => ({ group, runs }));
+  }
+
+  function runsForEnv(group) {
+    return state.data.runs.filter((r) => r.machine_group === group);
+  }
+
+  function currentRun() {
+    if (!state.data || !state.data.runs.length) return null;
+    const inEnv = runsForEnv(state.envGroup);
+    return inEnv.find((r) => r.id === state.runId) || inEnv[0] || state.data.runs[0];
+  }
+
+  function sameHostRuns(run) {
+    return state.data.runs
+      .filter((r) => r.machine_group === run.machine_group)
+      .slice()
+      .sort((a, b) => ((a.machine && a.machine.date) || a.id).localeCompare((b.machine && b.machine.date) || b.id));
+  }
+
+  function sameHostAb(run) {
+    return (state.data.compiler_ab || []).filter((ab) => ab.machine_group === run.machine_group);
+  }
+
+  function variantClass(name) {
+    if (name.startsWith("kizu")) return "is-kizu";
+    if (name.startsWith("rust")) return "is-rust";
+    return "";
+  }
+
   function showTip(evt, html) {
     tooltip.innerHTML = html;
     tooltip.hidden = false;
@@ -59,7 +178,7 @@
   }
 
   function moveTip(evt) {
-    const pad = 14;
+    const pad = 12;
     let x = evt.clientX + pad;
     let y = evt.clientY + pad;
     const rect = tooltip.getBoundingClientRect();
@@ -85,88 +204,91 @@
     });
   }
 
-  function currentRun() {
-    return state.data.runs.find((r) => r.id === state.runId) || state.data.runs[0];
+  function renderSeg(el, items, activeId, onPick, accent) {
+    el.innerHTML = items
+      .map((it) => {
+        const cls = ["seg-btn", it.id === activeId ? "active" : "", accent ? "accent-active" : ""].filter(Boolean).join(" ");
+        return `<button type="button" class="${cls}" data-seg="${esc(it.id)}"${it.disabled ? " disabled" : ""}>${esc(it.label)}</button>`;
+      })
+      .join("");
+    el.querySelectorAll("[data-seg]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        onPick(btn.getAttribute("data-seg"));
+      });
+    });
   }
 
-  function shortKizu(str) {
-    if (!str) return "—";
-    const m = str.match(/kizu\s+([^\s]+)\s+\(([0-9a-f]+)/);
-    if (m) return m[1] === "devel" ? m[2].slice(0, 8) : m[1];
-    return str.replace(/^kizu\s+/, "");
+  function buildBarsHtml(rows, opts) {
+    if (!rows.length) {
+      return `<div class="empty-box">No measurements for this selection.</div>`;
+    }
+    const maxVal = Math.max(opts.minMax || 0.0001, ...rows.map((r) => r.value));
+    const refPct = opts.refVal !== undefined && opts.refVal <= maxVal ? (opts.refVal / maxVal) * 100 : null;
+    const html = rows
+      .map((r) => {
+        const pct = Math.max(0.8, Math.min(100, (r.value / maxVal) * 100));
+        const refMark = refPct !== null ? `<span class="bar-ref" style="left:${refPct.toFixed(2)}%"></span>` : "";
+        const sub = r.sub ? `<span class="bar-val-sub">${esc(r.sub)}</span>` : "";
+        return `<div class="bar-row ${variantClass(r.name)}" data-tip="${esc(r.tip)}">
+          <div class="bar-name"><span>${esc(r.name)}</span><span class="bar-dot" style="background:${colorOf(r.name)}"></span></div>
+          <div class="bar-track">${refMark}<div class="bar-fill" style="width:${pct.toFixed(2)}%;background:${colorOf(r.name)}"></div></div>
+          <div class="bar-val">${esc(r.label)}${sub}</div>
+        </div>`;
+      })
+      .join("");
+    return `<div class="bar-list">${html}</div>`;
   }
 
-  function buildBarSvg(rows, opts) {
-    const width = 880;
-    const labelW = 148;
-    const rightW = 148;
-    const barW = width - labelW - rightW;
-    const rowH = 30;
-    const topPad = 12;
-    const botPad = 24;
-    const height = topPad + rows.length * rowH + botPad;
-    const maxVal = Math.max(opts.minMax || 0.001, ...rows.map((r) => r.value));
-    const scale = (v) => (v / maxVal) * barW;
+  function buildTrendSvg(seriesList, xLabels, opts) {
+    const width = 560;
+    const height = 186;
+    const padL = 48;
+    const padR = 18;
+    const padT = 14;
+    const padB = 26;
+    const plotW = width - padL - padR;
+    const plotH = height - padT - padB;
+
+    const allVals = [];
+    seriesList.forEach((s) =>
+      s.points.forEach((v) => {
+        if (v !== null && v !== undefined) allVals.push(v);
+      })
+    );
+    if (opts.refVal !== undefined) allVals.push(opts.refVal);
+    if (!allVals.length) {
+      return `<div class="empty-box">No trend points recorded for this host.</div>`;
+    }
+
+    const rawMax = Math.max(...allVals);
+    const rawMin = Math.min(...allVals);
+    const minV = opts.zeroBase ? 0 : Math.max(0, rawMin * 0.88);
+    const maxV = rawMax === minV ? rawMax * 1.2 + 0.1 : rawMax * 1.1;
+    const span = Math.max(0.001, maxV - minV);
+
+    const xAt = (i) => (xLabels.length <= 1 ? padL + plotW / 2 : padL + (i / (xLabels.length - 1)) * plotW);
+    const yAt = (v) => padT + plotH - ((v - minV) / span) * plotH;
 
     let grid = "";
     const ticks = 4;
     for (let i = 0; i <= ticks; i++) {
-      const val = (maxVal * i) / ticks;
-      const x = labelW + scale(val);
-      grid += `<line x1="${x.toFixed(1)}" y1="${topPad}" x2="${x.toFixed(1)}" y2="${height - botPad}" stroke="#e6ebf2" stroke-width="1"/>`;
-      grid += `<text x="${x.toFixed(1)}" y="${height - 6}" text-anchor="middle" fill="#758498" font-size="11" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">${esc(opts.tickFmt(val))}</text>`;
+      const v = minV + (span * i) / ticks;
+      const y = yAt(v);
+      grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${width - padR}" y2="${y.toFixed(1)}" stroke="#e3dfd4" stroke-width="1"/>`;
+      grid += `<text x="${padL - 7}" y="${(y + 3.5).toFixed(1)}" text-anchor="end" fill="#66645c" font-size="10" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">${esc(opts.yFmt(v))}</text>`;
     }
 
     let refLine = "";
-    if (opts.refVal !== undefined && opts.refVal <= maxVal) {
-      const rx = labelW + scale(opts.refVal);
-      refLine = `<line x1="${rx.toFixed(1)}" y1="${topPad - 4}" x2="${rx.toFixed(1)}" y2="${height - botPad + 2}" stroke="#334155" stroke-width="1.2" stroke-dasharray="4 3"/>`;
+    if (opts.refVal !== undefined) {
+      const ry = yAt(opts.refVal);
+      refLine = `<line x1="${padL}" y1="${ry.toFixed(1)}" x2="${width - padR}" y2="${ry.toFixed(1)}" stroke="#4b5563" stroke-width="1" stroke-dasharray="4 3"/>`;
     }
 
-    let bars = "";
-    rows.forEach((r, idx) => {
-      const y = topPad + idx * rowH;
-      const w = Math.max(2, scale(r.value));
-      const color = colorOf(r.name);
-      bars += `<g class="bar-row" data-tip="${esc(r.tip)}">`;
-      bars += `<rect class="bar-bg" x="0" y="${y}" width="${width}" height="${rowH}" fill="transparent"/>`;
-      bars += `<text x="${labelW - 10}" y="${y + 19}" text-anchor="end" fill="#111827" font-size="12" font-weight="600" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">${esc(r.name)}</text>`;
-      bars += `<rect x="${labelW}" y="${y + 6}" width="${w.toFixed(1)}" height="18" rx="3" fill="${color}"/>`;
-      bars += `<text x="${(labelW + w + 8).toFixed(1)}" y="${y + 19}" fill="#111827" font-size="12" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">${esc(r.label)}</text>`;
-      bars += `</g>`;
-    });
-
-    return `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(opts.aria || "Bar chart")}">${grid}${refLine}${bars}</svg>`;
-  }
-
-  function buildLineSvg(seriesList, xLabels, opts) {
-    const width = 880;
-    const padL = 62;
-    const padR = 26;
-    const padT = 18;
-    const padB = 42;
-    const plotW = width - padL - padR;
-    const plotH = 220;
-    const height = padT + plotH + padB;
-    const allVals = [];
-    seriesList.forEach((s) => s.points.forEach((p) => {
-      if (p !== null && p !== undefined) allVals.push(p);
-    }));
-    if (!allVals.length) {
-      return `<div class="empty-note">No points available.</div>`;
-    }
-    const maxV = Math.max(...allVals) * 1.12;
-    const minV = opts.zeroBase ? 0 : Math.max(0, Math.min(...allVals) * 0.85);
-    const span = Math.max(0.001, maxV - minV);
-    const xAt = (i) => xLabels.length <= 1 ? padL + plotW / 2 : padL + (i / (xLabels.length - 1)) * plotW;
-    const yAt = (v) => padT + plotH - ((v - minV) / span) * plotH;
-
-    let grid = "";
-    for (let i = 0; i <= 4; i++) {
-      const v = minV + (span * i) / 4;
-      const y = yAt(v);
-      grid += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${width - padR}" y2="${y.toFixed(1)}" stroke="#e6ebf2" stroke-width="1"/>`;
-      grid += `<text x="${padL - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end" fill="#758498" font-size="11" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">${esc(opts.yFmt(v))}</text>`;
+    let selLine = "";
+    if (opts.selectedIdx !== undefined && opts.selectedIdx >= 0 && opts.selectedIdx < xLabels.length) {
+      const sx = xAt(opts.selectedIdx);
+      selLine = `<line x1="${sx.toFixed(1)}" y1="${padT}" x2="${sx.toFixed(1)}" y2="${padT + plotH}" stroke="#e84800" stroke-opacity="0.28" stroke-width="1.5"/>`;
     }
 
     let xAxis = "";
@@ -176,7 +298,8 @@
       const show = i === 0 || isLast || (i % labelStep === 0 && xLabels.length - 1 - i >= Math.ceil(labelStep / 2));
       if (!show) return;
       const x = xAt(i);
-      xAxis += `<text x="${x.toFixed(1)}" y="${height - 14}" text-anchor="middle" fill="#526072" font-size="11" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">${esc(lbl)}</text>`;
+      const anchor = xLabels.length > 1 && i === 0 ? "start" : xLabels.length > 1 && isLast ? "end" : "middle";
+      xAxis += `<text x="${x.toFixed(1)}" y="${height - 7}" text-anchor="${anchor}" fill="#66645c" font-size="10" font-family="ui-monospace,SFMono-Regular,Menlo,monospace">${esc(lbl)}</text>`;
     });
 
     let paths = "";
@@ -184,219 +307,876 @@
       const coords = [];
       s.points.forEach((v, i) => {
         if (v !== null && v !== undefined) {
-          coords.push([xAt(i), yAt(v), v, xLabels[i]]);
+          coords.push([xAt(i), yAt(v), v, i]);
         }
       });
       if (coords.length >= 2) {
         const d = coords.map((c, idx) => (idx === 0 ? "M" : "L") + c[0].toFixed(1) + "," + c[1].toFixed(1)).join(" ");
-        paths += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="2.4"/>`;
+        const dash = s.dashed ? ` stroke-dasharray="4 3"` : "";
+        paths += `<path d="${d}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2}"${dash}/>`;
       }
-      coords.forEach(([cx, cy, v, xl]) => {
-        const tip = `${s.name} @ ${xl}: ${opts.yFmt(v)}`;
-        paths += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4.5" fill="${s.color}" stroke="#ffffff" stroke-width="1.5" data-tip="${esc(tip)}"/>`;
+      coords.forEach(([cx, cy, v, idx]) => {
+        const isSel = opts.selectedIdx === idx;
+        const tip = `<strong>${esc(s.name)}</strong><br>${esc(opts.tipLabels ? opts.tipLabels[idx] : xLabels[idx])}<br>${esc(opts.yFmt(v))}`;
+        if (isSel) {
+          paths += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="6.5" fill="none" stroke="${s.color}" stroke-opacity="0.35" stroke-width="1.5"/>`;
+        }
+        paths += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${isSel ? 4.2 : 3.4}" fill="${s.color}" stroke="#faf9f3" stroke-width="1.3" data-tip="${esc(tip)}"/>`;
       });
     });
 
-    const legend = `<div class="legend">${seriesList.map((s) => `<span class="legend-item"><span class="swatch" style="background:${s.color}"></span>${esc(s.name)}</span>`).join("")}</div>`;
-    return `<svg class="chart-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${esc(opts.aria || "Line chart")}">${grid}${xAxis}${paths}</svg>${legend}`;
+    return `<svg class="trend-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${esc(opts.aria || "Progression chart")}">${grid}${refLine}${selLine}${xAxis}${paths}</svg>`;
+  }
+
+  function selectEnvironment(group, targetRunId) {
+    state.envGroup = group;
+    const runs = runsForEnv(group);
+    state.runId = targetRunId && runs.some((r) => r.id === targetRunId) ? targetRunId : (runs[0] ? runs[0].id : null);
+    const run = currentRun();
+    if (run) syncRunDefaults(run);
+    renderEnvSwitcher();
+    populateRunSelect();
+    renderAll();
+  }
+
+  function renderEnvSwitcher() {
+    const container = document.getElementById("env-control");
+    const envs = envGroupsList();
+    if (!state.envGroup && envs.length) {
+      state.envGroup = envs[0].group;
+    }
+
+    if (envs.length <= 3) {
+      const pills = envs
+        .map((e) => {
+          const on = e.group === state.envGroup;
+          const label = shortEnvLabel(e.group, e.runs[0]);
+          const tip = `<strong>${esc(e.group)}</strong><br>${e.runs.length} run${e.runs.length === 1 ? "" : "s"} recorded<br>Isolated host — never mixed with other environments`;
+          return `<button type="button" class="env-pill${on ? " active" : ""}" aria-pressed="${on ? "true" : "false"}" data-env="${esc(e.group)}" data-tip="${esc(tip)}"><span>${esc(label)}</span><span class="env-count">${e.runs.length}</span></button>`;
+        })
+        .join("");
+      container.innerHTML = `<div class="env-pills" role="group" aria-label="Recorded host environments">${pills}</div>`;
+      container.querySelectorAll("[data-env]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const g = btn.getAttribute("data-env");
+          if (g !== state.envGroup) {
+            selectEnvironment(g);
+          }
+        });
+      });
+      bindTips(container);
+    } else {
+      const options = envs
+        .map((e) => {
+          const label = `${shortEnvLabel(e.group, e.runs[0])} (${e.runs.length})`;
+          return `<option value="${esc(e.group)}"${e.group === state.envGroup ? " selected" : ""}>${esc(label)}</option>`;
+        })
+        .join("");
+      container.innerHTML = `<select id="env-select" class="env-select" aria-label="Host environment">${options}</select>`;
+      document.getElementById("env-select").addEventListener("change", (ev) => {
+        selectEnvironment(ev.target.value);
+      });
+    }
+
+    const badge = document.getElementById("iso-badge");
+    const envCount = envs.length;
+    badge.textContent = envCount === 1 ? "host-isolated · never mixed" : `isolated · ${envCount} envs`;
+    badge.setAttribute(
+      "data-tip",
+      `<strong>Strict per-host isolation</strong><br>Showing only <strong>${esc(state.envGroup || "")}</strong>.<br>Different environments (GHA Linux, GHA macOS, local WSL2/macOS, Colab) are switched via Env and never mixed.`
+    );
+    bindTips(badge.parentElement);
   }
 
   function populateRunSelect() {
     const sel = document.getElementById("run-select");
-    const groups = new Map();
-    state.data.runs.forEach((r) => {
-      if (!groups.has(r.machine_group)) groups.set(r.machine_group, []);
-      groups.get(r.machine_group).push(r);
-    });
+    const runs = runsForEnv(state.envGroup);
     sel.innerHTML = "";
-    groups.forEach((runs, label) => {
-      const og = document.createElement("optgroup");
-      og.label = label;
-      runs.forEach((r) => {
-        const opt = document.createElement("option");
-        opt.value = r.id;
-        opt.textContent = `${r.id} (${shortKizu(r.machine.kizu)})`;
-        og.appendChild(opt);
-      });
-      sel.appendChild(og);
+    runs.forEach((r) => {
+      const opt = document.createElement("option");
+      opt.value = r.id;
+      const rev = shortKizu(r.machine && r.machine.kizu);
+      const date = shortDate(r);
+      opt.textContent = rev && rev !== "—" ? `${date} · ${rev}` : r.id;
+      opt.title = r.id;
+      sel.appendChild(opt);
     });
-    if (!state.runId && state.data.runs.length) {
-      state.runId = state.data.runs[0].id;
+    if ((!state.runId || !runs.some((r) => r.id === state.runId)) && runs.length) {
+      state.runId = runs[0].id;
     }
-    sel.value = state.runId;
+    sel.value = state.runId || "";
   }
 
-  function renderMeta(run) {
-    const m = run.machine || {};
-    const items = [
-      ["Runner", m.runner],
-      ["CPU", m.cpu],
-      ["OS", m.os],
-      ["Cores", m.cores],
-      ["Pin", m.pin],
-      ["Kizu", m.kizu],
-      ["Rust", m.rust],
-      ["Go", m.go],
-      ["Zig", m.zig],
-      ["Clang", m.clang],
-      ["Date", m.date]
-    ].filter(([, v]) => v && v !== "none");
-    document.getElementById("machine-meta").innerHTML = items
-      .map(([k, v]) => `<span><strong>${esc(k)}:</strong> ${esc(v)}</span>`)
-      .join("");
+  function syncRunDefaults(run) {
+    if (run.compile && run.compile.sizes && run.compile.sizes.length) {
+      const largest = run.compile.sizes[run.compile.sizes.length - 1];
+      if (!run.compile.sizes.includes(state.cpSize)) state.cpSize = largest;
+      const cacheSizes = Object.keys(run.compile.cache || {});
+      state.caMode = cacheSizes.length ? "cache" : "rss";
+      if (cacheSizes.length) {
+        if (!cacheSizes.includes(state.caSize)) state.caSize = cacheSizes[cacheSizes.length - 1];
+      } else {
+        state.caSize = largest;
+      }
+    }
+    if (state.hiMetric === "ab" && sameHostAb(run).length === 0) {
+      state.hiMetric = "runtime";
+    }
   }
 
   function renderKpis(run) {
-    const cards = [];
     const rt = run.runtime && run.runtime.variants;
+    const cp = run.compile;
+    const largest = cp && cp.sizes && cp.sizes.length ? cp.sizes[cp.sizes.length - 1] : "m160";
+
+    let kpi1 = { label: "Runtime vs C -O2", tag: "6-bench", val: "—", cls: "accent", delta: "no runtime data" };
     if (rt && rt["kizu-llvm"]) {
       const gm = rt["kizu-llvm"].geomean;
-      const vsRust = rt["rust"] ? ` · rust ${rt["rust"].geomean.toFixed(2)}x` : "";
-      const vsDir = rt["kizu-direct"] ? ` · direct ${rt["kizu-direct"].geomean.toFixed(2)}x` : "";
-      cards.push({
-        label: "Runtime Geomean (vs C -O2)",
-        value: `${gm.toFixed(2)}x`,
-        sub: `kizu-llvm${vsRust}${vsDir}`
-      });
+      const dir = rt["kizu-direct"] ? `${rt["kizu-direct"].geomean.toFixed(2)}×` : "—";
+      const rust = rt["rust"] ? `${rt["rust"].geomean.toFixed(2)}×` : "—";
+      kpi1 = {
+        label: "Runtime vs C -O2",
+        tag: "kizu-llvm",
+        val: `${gm.toFixed(2)}×`,
+        cls: "accent",
+        delta: `direct ${dir} · rust ${rust}`
+      };
     }
-    const cp = run.compile;
-    if (cp && cp.scenarios.cold) {
-      const sz = cp.sizes[cp.sizes.length - 1];
-      const cold = cp.scenarios.cold[sz] || {};
+
+    let kpi2 = { label: `Cold Compile (${largest})`, tag: "kizu-direct", val: "—", cls: "cobalt", delta: "no compile data" };
+    const cold = cp && cp.scenarios && cp.scenarios.cold && cp.scenarios.cold[largest];
+    if (cold) {
       const kd = cold["kizu-direct"] || cold["kizu-llvm"];
-      const rd = cold["rust-debug"];
-      const zd = cold["zig-debug"];
+      const kdName = cold["kizu-direct"] ? "kizu-direct" : "kizu-llvm";
       if (kd) {
-        let sub = `${sz} cold wall`;
-        if (rd) sub += ` · rust-debug ${rd.wall.toFixed(2)}s`;
-        else if (zd) sub += ` · zig-debug ${zd.wall.toFixed(2)}s`;
-        cards.push({
-          label: "Compile Speed (kizu-direct)",
-          value: `${kd.wall.toFixed(2)}s`,
-          sub
-        });
-      }
-      const cache = cp.cache && cp.cache[sz];
-      if (cache && (cache["kizu-direct"] || cache["kizu-llvm"])) {
-        const kc = cache["kizu-direct"] || cache["kizu-llvm"];
-        const rc = cache["rust-debug"];
-        const sub = rc ? `${sz} · rust target/ ${rc.total_mb.toFixed(1)} MB` : `${sz} total cache`;
-        cards.push({
-          label: "Build Cache Size (kizu)",
-          value: `${kc.total_mb.toFixed(1)} MB`,
-          sub
-        });
-      } else if (cp.rss_mb && (cp.rss_mb["kizu-direct"] || cp.rss_mb["kizu-llvm"])) {
-        const kr = cp.rss_mb["kizu-direct"] || cp.rss_mb["kizu-llvm"];
-        cards.push({
-          label: "Compiler Peak RSS (kizu)",
-          value: `${kr.toFixed(0)} MB`,
-          sub: `${sz} cold build`
-        });
-      }
-      const chk = cp.scenarios.check && cp.scenarios.check[sz];
-      if (chk && chk["kizu-check"]) {
-        const rc = chk["rust-check"];
-        const zc = chk["zig-check"];
-        let sub = `${sz} check`;
-        if (rc) sub += ` · cargo check ${rc.wall.toFixed(2)}s`;
-        else if (zc) sub += ` · zig-check ${zc.wall.toFixed(2)}s`;
-        cards.push({
-          label: "Type-Check Only (kizu)",
-          value: `${chk["kizu-check"].wall.toFixed(2)}s`,
-          sub
-        });
+        const cmpParts = [];
+        if (cold["rust-debug"]) cmpParts.push(`rust-dbg ${fmtSec(cold["rust-debug"].wall)}`);
+        else if (cold["zig-debug"]) cmpParts.push(`zig-dbg ${fmtSec(cold["zig-debug"].wall)}`);
+        if (cold["go"]) cmpParts.push(`go ${fmtSec(cold["go"].wall)}`);
+        else if (cold["c-O2"]) cmpParts.push(`c-O2 ${fmtSec(cold["c-O2"].wall)}`);
+        kpi2 = {
+          label: `Cold Compile (${largest})`,
+          tag: kdName,
+          val: fmtSec(kd.wall),
+          cls: "cobalt",
+          delta: cmpParts.join(" · ") || "cold wall"
+        };
       }
     }
-    document.getElementById("kpi-row").innerHTML = cards
+
+    let kpi3 = { label: `Check / 1-fn (${largest})`, tag: "kizu-check", val: "—", cls: "", delta: "no check data" };
+    const chk = cp && cp.scenarios && cp.scenarios.check && cp.scenarios.check[largest];
+    const edit = cp && cp.scenarios && cp.scenarios.edit && cp.scenarios.edit[largest];
+    if (chk && chk["kizu-check"]) {
+      const parts = [];
+      if (edit && edit["kizu-direct"]) parts.push(`1-fn ${fmtSec(edit["kizu-direct"].wall)}`);
+      if (chk["rust-check"]) parts.push(`rust ${fmtSec(chk["rust-check"].wall)}`);
+      else if (chk["zig-check"]) parts.push(`zig ${fmtSec(chk["zig-check"].wall)}`);
+      else if (chk["go-vet"]) parts.push(`go ${fmtSec(chk["go-vet"].wall)}`);
+      kpi3 = {
+        label: `Check / 1-fn (${largest})`,
+        tag: "kizu-check",
+        val: fmtSec(chk["kizu-check"].wall),
+        cls: "",
+        delta: parts.join(" · ") || "type-check"
+      };
+    }
+
+    let kpi4 = { label: `Cache / RSS (${largest})`, tag: "kizu", val: "—", cls: "", delta: "no cache or RSS" };
+    const cacheMap = cp && cp.cache && cp.cache[largest];
+    if (cacheMap && (cacheMap["kizu-direct"] || cacheMap["kizu-llvm"])) {
+      const kc = cacheMap["kizu-direct"] || cacheMap["kizu-llvm"];
+      const rc = cacheMap["rust-debug"] || cacheMap["rust-release"];
+      const zc = cacheMap["zig-debug"];
+      const delta = rc
+        ? `rust target/ ${fmtMb(rc.total_mb)}`
+        : zc
+          ? `zig cache ${fmtMb(zc.total_mb)}`
+          : `${kc.files} files`;
+      kpi4 = {
+        label: `Build Cache (${largest})`,
+        tag: "kizu",
+        val: fmtMb(kc.total_mb),
+        cls: "",
+        delta
+      };
+    } else if (cp && cp.rss_mb && (cp.rss_mb["kizu-direct"] !== undefined || cp.rss_mb["kizu-llvm"] !== undefined)) {
+      const kdRss = cp.rss_mb["kizu-direct"];
+      const klRss = cp.rss_mb["kizu-llvm"];
+      const primary = kdRss !== undefined ? kdRss : klRss;
+      const parts = [];
+      if (kdRss !== undefined && klRss !== undefined) parts.push(`llvm ${fmtMb(klRss)}`);
+      if (cp.rss_mb["rust-debug"] !== undefined) parts.push(`rust ${fmtMb(cp.rss_mb["rust-debug"])}`);
+      else if (cp.rss_mb["zig-debug"] !== undefined) parts.push(`zig ${fmtMb(cp.rss_mb["zig-debug"])}`);
+      kpi4 = {
+        label: `Peak RSS (${largest})`,
+        tag: "kizu-direct",
+        val: fmtMb(primary),
+        cls: "",
+        delta: parts.join(" · ") || "cold peak RSS"
+      };
+    }
+
+    const cells = [kpi1, kpi2, kpi3, kpi4];
+    document.getElementById("kpi-strip").innerHTML = cells
       .map(
-        (c) =>
-          `<div class="kpi-card"><div class="kpi-label">${esc(c.label)}</div><div class="kpi-value">${esc(c.value)}</div><div class="kpi-sub">${esc(c.sub)}</div></div>`
+        (c) => `<div class="kpi-cell">
+          <div class="kpi-top">
+            <span class="kpi-label">${esc(c.label)}</span>
+            <span class="kpi-tag">${esc(c.tag)}</span>
+          </div>
+          <div class="kpi-main">
+            <span class="kpi-val ${c.cls}">${esc(c.val)}</span>
+            <span class="kpi-delta">${esc(c.delta)}</span>
+          </div>
+        </div>`
       )
       .join("");
   }
 
   function renderRuntime(run) {
-    const panel = document.getElementById("panel-runtime");
+    const body = document.getElementById("body-runtime");
+    const sub = document.getElementById("sub-runtime");
+    const ctrlView = document.getElementById("ctrl-rt-view");
+    const ctrlScope = document.getElementById("ctrl-rt-scope");
+
+    renderSeg(
+      ctrlView,
+      [
+        { id: "geomean", label: "Geomean" },
+        { id: "matrix", label: "Per-Bench" }
+      ],
+      state.rtView,
+      (v) => {
+        state.rtView = v;
+        renderRuntime(run);
+      },
+      false
+    );
+
+    renderSeg(
+      ctrlScope,
+      [
+        { id: "base", label: "Base" },
+        { id: "all", label: "All" }
+      ],
+      state.rtScope,
+      (v) => {
+        state.rtScope = v;
+        renderRuntime(run);
+      },
+      false
+    );
+
     if (!run.runtime) {
-      panel.innerHTML = `<div class="card"><div class="empty-note">No runtime data in this run.</div></div>`;
+      sub.textContent = "no data";
+      body.innerHTML = `<div class="empty-box">No runtime benchmark data in this run.</div>`;
       return;
     }
+
     const rt = run.runtime;
     const programs = state.data.programs;
-    const variantKeys = state.data.variants.filter((v) => rt.variants[v]);
+    const tuned = new Set(["rust-native", "c-O3native"]);
+    const allKeys = state.data.variants.filter((v) => rt.variants[v]);
+    const keys = state.rtScope === "base" ? allKeys.filter((v) => !tuned.has(v)) : allKeys;
+    const sortedKeys = keys.slice().sort((a, b) => rt.variants[a].geomean - rt.variants[b].geomean);
 
-    const pills = [
-      `<button class="pill ${state.runtimeProg === "geomean" ? "active" : ""}" data-rt-prog="geomean">Geomean (6)</button>`,
-      ...programs.map(
-        (p) =>
-          `<button class="pill ${state.runtimeProg === p ? "active" : ""}" data-rt-prog="${p}">${p}</button>`
-      )
-    ].join("");
+    sub.textContent = state.rtView === "geomean" ? "vs C -O2 · lower is faster" : "median ms · lower is faster";
 
-    let rows;
-    let chartOpts;
-    if (state.runtimeProg === "geomean") {
-      rows = variantKeys
-        .map((v) => {
-          const gm = rt.variants[v].geomean;
-          return {
-            name: v,
-            value: gm,
-            label: `${gm.toFixed(2)}x`,
-            tip: `<strong>${v}</strong><br>Geomean vs C -O2: ${gm.toFixed(3)}x`
-          };
-        })
-        .sort((a, b) => a.value - b.value);
-      chartOpts = {
-        refVal: 1.0,
-        minMax: 1.2,
-        tickFmt: (v) => v.toFixed(1) + "x",
-        aria: "Runtime geometric mean ratio vs C -O2"
-      };
+    let contentHtml = "";
+    if (state.rtView === "geomean") {
+      const rows = sortedKeys.map((v) => {
+        const entry = rt.variants[v];
+        const gm = entry.geomean;
+        const lines = programs.map((p) => {
+          const cell = entry.programs[p];
+          return `${p}: ${fmtSec(cell.median)} (${cell.ratio.toFixed(2)}×)`;
+        });
+        return {
+          name: v,
+          value: gm,
+          label: `${gm.toFixed(2)}×`,
+          sub: v === "c-O2" ? "base" : "",
+          tip: `<strong>${esc(v)}</strong> · geomean ${gm.toFixed(3)}× C -O2<br>${lines.join("<br>")}`
+        };
+      });
+      contentHtml = buildBarsHtml(rows, { refVal: 1.0, minMax: 1.2 });
     } else {
-      const p = state.runtimeProg;
-      rows = variantKeys
+      const bestByProg = {};
+      programs.forEach((p) => {
+        bestByProg[p] = Math.min(...sortedKeys.map((v) => rt.variants[v].programs[p].median));
+      });
+      const bestGm = Math.min(...sortedKeys.map((v) => rt.variants[v].geomean));
+      const trs = sortedKeys
         .map((v) => {
-          const cell = rt.variants[v].programs[p];
-          return {
-            name: v,
-            value: cell.median,
-            label: `${cell.median.toFixed(3)}s (${cell.ratio.toFixed(2)}x)`,
-            tip: `<strong>${v} · ${p}</strong><br>Median: ${cell.median.toFixed(4)}s<br>Range: ${cell.min.toFixed(3)}s – ${cell.max.toFixed(3)}s (${cell.samples} runs)<br>vs C -O2: ${cell.ratio.toFixed(2)}x`
-          };
+          const entry = rt.variants[v];
+          const tds = programs
+            .map((p) => {
+              const c = entry.programs[p];
+              const isBest = Math.abs(c.median - bestByProg[p]) < 0.0005;
+              const ms = Math.round(c.median * 1000);
+              const tip = `<strong>${esc(v)} · ${esc(p)}</strong><br>Median: ${(c.median * 1000).toFixed(1)}ms (${c.ratio.toFixed(2)}× C -O2)<br>Range: ${(c.min * 1000).toFixed(1)}–${(c.max * 1000).toFixed(1)}ms (${c.samples} runs)`;
+              return `<td class="${isBest ? "best" : ""}" data-tip="${esc(tip)}">${ms}</td>`;
+            })
+            .join("");
+          const gmBest = Math.abs(entry.geomean - bestGm) < 0.0005;
+          return `<tr class="${variantClass(v)}">
+            <td><span class="variant-inline"><span class="bar-dot" style="background:${colorOf(v)}"></span>${esc(v)}</span></td>
+            ${tds}
+            <td class="geo-col ${gmBest ? "best" : ""}">${entry.geomean.toFixed(2)}×</td>
+          </tr>`;
         })
-        .sort((a, b) => a.value - b.value);
-      chartOpts = {
-        tickFmt: (v) => v.toFixed(2) + "s",
-        aria: `Runtime median seconds for ${p}`
-      };
+        .join("");
+
+      contentHtml = `<div class="matrix-wrap">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th>Variant</th>
+              ${programs.map((p) => `<th>${esc(PROG_SHORT[p] || p)}</th>`).join("")}
+              <th>Geo</th>
+            </tr>
+          </thead>
+          <tbody>${trs}</tbody>
+        </table>
+      </div>`;
     }
 
+    const rustNote = rt.variants["rust"] ? "" : `<span class="foot-pill">rust in newer runs</span>`;
+    body.innerHTML = `${contentHtml}
+      <div class="quad-foot">
+        <div class="quad-foot-left">
+          <span>${rt.min_samples}+ runs/cell &middot; spread ${(rt.spread * 100).toFixed(1)}% &middot; dashed = 1.00× C -O2</span>
+        </div>
+        <div class="quad-foot-right">${rustNote}</div>
+      </div>`;
+    bindTips(body);
+  }
+
+  function renderCompile(run) {
+    const body = document.getElementById("body-compile");
+    const sub = document.getElementById("sub-compile");
+    const ctrlSize = document.getElementById("ctrl-cp-size");
+    const ctrlPhase = document.getElementById("ctrl-cp-phase");
+
+    if (!run.compile) {
+      ctrlSize.innerHTML = "";
+      ctrlPhase.innerHTML = "";
+      sub.textContent = "no data";
+      body.innerHTML = `<div class="empty-box">No compile-speed data in this run.</div>`;
+      return;
+    }
+
+    const cp = run.compile;
+    const sizes = cp.sizes || [];
+    if (sizes.length && !sizes.includes(state.cpSize)) {
+      state.cpSize = sizes[sizes.length - 1];
+    }
+
+    renderSeg(
+      ctrlSize,
+      sizes.map((sz) => ({ id: sz, label: sz })),
+      state.cpSize,
+      (v) => {
+        state.cpSize = v;
+        renderCompile(run);
+      },
+      false
+    );
+
+    renderSeg(
+      ctrlPhase,
+      [
+        { id: "cold", label: "Cold" },
+        { id: "edit", label: "1-fn" },
+        { id: "noop", label: "Noop" },
+        { id: "check", label: "Check" }
+      ],
+      state.cpPhase,
+      (v) => {
+        state.cpPhase = v;
+        renderCompile(run);
+      },
+      true
+    );
+
+    const scData = ((cp.scenarios || {})[state.cpPhase] || {})[state.cpSize] || {};
+    const ordered = state.cpPhase === "check"
+      ? state.data.compile_variants.check.filter((k) => scData[k])
+      : [...state.data.compile_variants.noopt, ...state.data.compile_variants.opt].filter((k) => scData[k]);
+
+    const kizuRef = scData["kizu-direct"] || scData["kizu-check"] || scData["kizu-llvm"];
+    const rows = ordered
+      .map((k) => {
+        const v = scData[k];
+        const ratio = kizuRef && kizuRef.wall > 0 ? v.wall / kizuRef.wall : null;
+        const ratioText = ratio !== null && k !== "kizu-direct" && k !== "kizu-check" ? `${ratio.toFixed(1)}×` : "";
+        return {
+          name: k,
+          value: v.wall,
+          label: fmtSec(v.wall),
+          sub: ratioText,
+          tip: `<strong>${esc(k)} · ${esc(state.cpSize)} · ${esc(state.cpPhase)}</strong><br>Wall: ${v.wall.toFixed(4)}s<br>CPU: ${v.cpu.toFixed(4)}s${ratio !== null ? `<br>vs Kizu: ${ratio.toFixed(2)}×` : ""}`
+        };
+      })
+      .sort((a, b) => a.value - b.value);
+
+    const locBySize = { m10: "~7k LOC", m40: "~28k LOC", m160: "~113k LOC" };
+    sub.textContent = `${locBySize[state.cpSize] || state.cpSize} · wall`;
+
+    body.innerHTML = `${buildBarsHtml(rows, { minMax: 0.01 })}
+      <div class="quad-foot">
+        <div class="quad-foot-left">
+          <span>sorted fastest first &middot; ratio vs kizu</span>
+        </div>
+        <div class="quad-foot-right">
+          <span>${rows.length} compilers</span>
+        </div>
+      </div>`;
+    bindTips(body);
+  }
+
+  function renderCache(run) {
+    const body = document.getElementById("body-cache");
+    const sub = document.getElementById("sub-cache");
+    const ctrlSize = document.getElementById("ctrl-ca-size");
+    const ctrlMode = document.getElementById("ctrl-ca-mode");
+
+    if (!run.compile) {
+      ctrlSize.innerHTML = "";
+      ctrlMode.innerHTML = "";
+      sub.textContent = "no data";
+      body.innerHTML = `<div class="empty-box">No cache or RSS data in this run.</div>`;
+      return;
+    }
+
+    const cp = run.compile;
+    const cacheAvailable = hasCacheData(run);
+    const cacheSizes = Object.keys(cp.cache || {});
+    const rssSizes = Object.keys(cp.rss_by_size || {});
+    const sizes = state.caMode === "cache" ? cacheSizes : (rssSizes.length ? rssSizes : cp.sizes || []);
+    if (sizes.length && !sizes.includes(state.caSize)) {
+      state.caSize = sizes[sizes.length - 1];
+    }
+
+    if (sizes.length > 1) {
+      renderSeg(
+        ctrlSize,
+        sizes.map((sz) => ({ id: sz, label: sz })),
+        state.caSize,
+        (v) => {
+          state.caSize = v;
+          renderCache(run);
+        },
+        false
+      );
+    } else {
+      ctrlSize.innerHTML = "";
+    }
+
+    renderSeg(
+      ctrlMode,
+      [
+        { id: "cache", label: "Cache MB" },
+        { id: "rss", label: "Peak RSS" }
+      ],
+      state.caMode,
+      (v) => {
+        state.caMode = v;
+        renderCache(run);
+      },
+      true
+    );
+
+    const allKeys = [...state.data.compile_variants.noopt, ...state.data.compile_variants.opt];
+
+    if (state.caMode === "cache") {
+      sub.textContent = cacheAvailable ? `${state.caSize} disk footprint` : "not in this run";
+      if (!cacheAvailable) {
+        const newer = state.data.runs.find((r) => hasCacheData(r));
+        const switchBtn = newer
+          ? `<button type="button" class="inline-btn" data-jump-env="${esc(newer.machine_group)}" data-jump-run="${esc(newer.id)}">Open ${esc(shortEnvLabel(newer.machine_group, newer))}</button>`
+          : "";
+        body.innerHTML = `<div class="empty-box">
+          <div>Build cache size (<code>cache.json</code>) was added in newer runs.</div>
+          <div class="empty-actions">
+            ${switchBtn}
+            <button type="button" class="inline-btn" data-show-rss="1">Show Peak RSS</button>
+          </div>
+        </div>
+        <div class="quad-foot">
+          <div class="quad-foot-left"><span class="foot-pill accent">cache added in newer runs</span></div>
+          <div class="quad-foot-right"><span>KIZU_CACHE_DIR vs target/</span></div>
+        </div>`;
+        const rssBtn = body.querySelector("[data-show-rss]");
+        if (rssBtn) {
+          rssBtn.addEventListener("click", () => {
+            state.caMode = "rss";
+            renderCache(run);
+          });
+        }
+        const jumpBtn = body.querySelector("[data-jump-run]");
+        if (jumpBtn) {
+          jumpBtn.addEventListener("click", () => {
+            selectEnvironment(jumpBtn.getAttribute("data-jump-env"), jumpBtn.getAttribute("data-jump-run"));
+          });
+        }
+        return;
+      }
+
+      const cdata = cp.cache[state.caSize] || {};
+      const present = allKeys.filter((k) => cdata[k]);
+      const kizuRef = cdata["kizu-direct"] || cdata["kizu-llvm"];
+      const refVal = kizuRef ? kizuRef[state.caField] : null;
+      const rows = present
+        .map((k) => {
+          const e = cdata[k];
+          const val = e[state.caField];
+          const ratio = refVal && refVal > 0 && k !== "kizu-direct" ? `${(val / refVal).toFixed(1)}×` : "";
+          return {
+            name: k,
+            value: val,
+            label: fmtMb(val),
+            sub: ratio,
+            tip: `<strong>${esc(k)} · ${esc(state.caSize)}</strong><br>Total cache: ${e.total_mb.toFixed(2)} MB<br>Project delta: ${e.project_mb.toFixed(2)} MB<br>Seed: ${e.seed_mb.toFixed(2)} MB<br>Files: ${e.files.toLocaleString()}`
+          };
+        })
+        .sort((a, b) => a.value - b.value);
+
+      body.innerHTML = `${buildBarsHtml(rows, { minMax: 1 })}
+        <div class="quad-foot">
+          <div class="quad-foot-left">
+            <span>${state.caField === "project_mb" ? "project delta" : "total cache dir"} &middot; ratio vs kizu</span>
+          </div>
+          <div class="quad-foot-right">
+            <button type="button" class="inline-btn" style="height:18px;font-size:9.5px;padding:0 6px" data-toggle-cafield="1">${state.caField === "total_mb" ? "Switch to delta" : "Switch to total"}</button>
+          </div>
+        </div>`;
+      const fbtn = body.querySelector("[data-toggle-cafield]");
+      if (fbtn) {
+        fbtn.addEventListener("click", () => {
+          state.caField = state.caField === "total_mb" ? "project_mb" : "total_mb";
+          renderCache(run);
+        });
+      }
+      bindTips(body);
+      return;
+    }
+
+    const rssMap = (cp.rss_by_size && cp.rss_by_size[state.caSize]) || cp.rss_mb || {};
+    const present = allKeys.filter((k) => rssMap[k] !== undefined);
+    const kizuRef = rssMap["kizu-direct"] !== undefined ? rssMap["kizu-direct"] : rssMap["kizu-llvm"];
+    const rows = present
+      .map((k) => {
+        const val = rssMap[k];
+        const ratio = kizuRef && kizuRef > 0 && k !== "kizu-direct" ? `${(val / kizuRef).toFixed(2)}×` : "";
+        return {
+          name: k,
+          value: val,
+          label: fmtMb(val),
+          sub: ratio,
+          tip: `<strong>${esc(k)} · ${esc(state.caSize)} cold</strong><br>Peak RSS: ${val.toFixed(1)} MB${kizuRef ? `<br>vs kizu-direct: ${(val / kizuRef).toFixed(2)}×` : ""}`
+        };
+      })
+      .sort((a, b) => a.value - b.value);
+
+    sub.textContent = `${state.caSize} cold peak RSS`;
+    const cacheNote = cacheAvailable ? "" : `<span class="foot-pill accent">cache added in newer runs</span>`;
+    body.innerHTML = `${buildBarsHtml(rows, { minMax: 50 })}
+      <div class="quad-foot">
+        <div class="quad-foot-left">
+          <span>cold build max RSS &middot; ratio vs kizu</span>
+        </div>
+        <div class="quad-foot-right">${cacheNote}</div>
+      </div>`;
+    bindTips(body);
+  }
+
+  function renderHistory(run) {
+    const body = document.getElementById("body-history");
+    const sub = document.getElementById("sub-history");
+    const ctrlMetric = document.getElementById("ctrl-hi-metric");
+
+    const runs = sameHostRuns(run);
+    const abs = sameHostAb(run);
+
+    renderSeg(
+      ctrlMetric,
+      [
+        { id: "runtime", label: "Runtime" },
+        { id: "compile", label: "Compile" },
+        { id: "ab", label: "A/B", disabled: abs.length === 0 }
+      ],
+      state.hiMetric,
+      (v) => {
+        state.hiMetric = v;
+        renderHistory(run);
+      },
+      true
+    );
+
+    if (state.hiMetric === "ab") {
+      if (!abs.length) {
+        sub.textContent = "same host only";
+        body.innerHTML = `<div class="empty-box">No compiler A/B runs recorded for this host.</div>`;
+        return;
+      }
+      const ab = abs[abs.length - 1];
+      const xl = ab.revs.map((x) => x.rev);
+      const first = ab.revs[0];
+      const last = ab.revs[ab.revs.length - 1];
+      const rssPct = first && last && first.rss_mb ? (((last.rss_mb - first.rss_mb) / first.rss_mb) * 100).toFixed(1) : null;
+      const heapPct = first && last && first.heap_peak_mb && last.heap_peak_mb
+        ? (((last.heap_peak_mb - first.heap_peak_mb) / first.heap_peak_mb) * 100).toFixed(1)
+        : null;
+      const wallPct = first && last && first.wall ? (((last.wall - first.wall) / first.wall) * 100).toFixed(1) : null;
+
+      const series = [
+        { name: "Max RSS", color: "#1d4ed8", points: ab.revs.map((x) => x.rss_mb), width: 2.2 },
+        { name: "Heap Peak", color: "#e84800", points: ab.revs.map((x) => x.heap_peak_mb), width: 2.2 }
+      ];
+      sub.textContent = `${ab.revs.length} revs · ${ab.input || "compiler"}`;
+
+      const legend = `<div class="legend-row">
+        <span class="legend-item"><span class="bar-dot" style="background:#1d4ed8"></span>RSS <strong>${fmtMb(last.rss_mb)}</strong>${rssPct !== null ? ` (${rssPct}%)` : ""}</span>
+        <span class="legend-item"><span class="bar-dot" style="background:#e84800"></span>Heap <strong>${fmtMb(last.heap_peak_mb)}</strong>${heapPct !== null ? ` (${heapPct}%)` : ""}</span>
+        <span class="legend-item">Wall <strong>${fmtSec(last.wall)}</strong>${wallPct !== null ? ` (${wallPct}%)` : ""}</span>
+      </div>`;
+
+      body.innerHTML = `<div class="chart-box">
+        ${legend}
+        <div class="svg-stage">${buildTrendSvg(series, xl, { zeroBase: true, yFmt: (v) => Math.round(v) + " MB", aria: "Compiler A/B memory progression" })}</div>
+      </div>
+      <div class="quad-foot">
+        <div class="quad-foot-left"><span>${esc(ab.id)}</span></div>
+        <div class="quad-foot-right"><span class="foot-pill">same-host only</span></div>
+      </div>`;
+      bindTips(body);
+      return;
+    }
+
+    const selIdx = runs.findIndex((r) => r.id === run.id);
+    const xLabels = runs.map((r) => shortKizu(r.machine && r.machine.kizu));
+    const tipLabels = runs.map((r) => `${r.id} (${shortDate(r)})`);
+    const envShort = shortEnvLabel(run.machine_group, run);
+
+    if (state.hiMetric === "runtime") {
+      const candidateKeys = ["kizu-llvm", "kizu-direct", "rust", "c-O2"];
+      const series = candidateKeys
+        .map((k) => {
+          const pts = runs.map((r) => (r.runtime && r.runtime.variants[k] ? r.runtime.variants[k].geomean : null));
+          return {
+            name: k,
+            color: colorOf(k),
+            points: pts,
+            dashed: k === "c-O2",
+            width: k.startsWith("kizu") ? 2.4 : 1.7
+          };
+        })
+        .filter((s) => s.points.some((v) => v !== null));
+
+      sub.textContent = `${runs.length} run${runs.length === 1 ? "" : "s"} · same host`;
+
+      const legend = `<div class="legend-row">${series
+        .map((s) => {
+          const latest = s.points[selIdx >= 0 ? selIdx : s.points.length - 1];
+          return `<span class="legend-item"><span class="bar-dot" style="background:${s.color}"></span>${esc(s.name)} <strong>${latest !== null && latest !== undefined ? latest.toFixed(2) + "×" : "—"}</strong></span>`;
+        })
+        .join("")}</div>`;
+
+      body.innerHTML = `<div class="chart-box">
+        ${legend}
+        <div class="svg-stage">${buildTrendSvg(series, xLabels, {
+          zeroBase: false,
+          refVal: 1.0,
+          selectedIdx: selIdx,
+          tipLabels,
+          yFmt: (v) => v.toFixed(2) + "×",
+          aria: "Same-host runtime geomean progression"
+        })}</div>
+      </div>
+      <div class="quad-foot">
+        <div class="quad-foot-left"><span>${esc(envShort)}</span></div>
+        <div class="quad-foot-right"><span class="foot-pill">hosts never mixed</span></div>
+      </div>`;
+      bindTips(body);
+      return;
+    }
+
+    const largest = run.compile && run.compile.sizes && run.compile.sizes.length ? run.compile.sizes[run.compile.sizes.length - 1] : "m160";
+    const cpKeys = ["kizu-direct", "kizu-llvm", "rust-debug", "zig-debug", "go"];
+    const series = cpKeys
+      .map((k) => {
+        const pts = runs.map((r) => {
+          const m = r.compile && r.compile.scenarios && r.compile.scenarios.cold && r.compile.scenarios.cold[largest];
+          return m && m[k] ? m[k].wall : null;
+        });
+        return {
+          name: k,
+          color: colorOf(k),
+          points: pts,
+          width: k.startsWith("kizu") ? 2.4 : 1.6
+        };
+      })
+      .filter((s) => s.points.some((v) => v !== null));
+
+    sub.textContent = `${largest} cold · ${runs.length} run${runs.length === 1 ? "" : "s"}`;
+
+    const legend = `<div class="legend-row">${series
+      .slice(0, 4)
+      .map((s) => {
+        const latest = s.points[selIdx >= 0 ? selIdx : s.points.length - 1];
+        return `<span class="legend-item"><span class="bar-dot" style="background:${s.color}"></span>${esc(s.name)} <strong>${latest !== null && latest !== undefined ? fmtSec(latest) : "—"}</strong></span>`;
+      })
+      .join("")}</div>`;
+
+    body.innerHTML = `<div class="chart-box">
+      ${legend}
+      <div class="svg-stage">${buildTrendSvg(series, xLabels, {
+        zeroBase: true,
+        selectedIdx: selIdx,
+        tipLabels,
+        yFmt: (v) => fmtSec(v),
+        aria: "Same-host compile speed progression"
+      })}</div>
+    </div>
+    <div class="quad-foot">
+      <div class="quad-foot-left"><span>${esc(envShort)}</span></div>
+      <div class="quad-foot-right"><span class="foot-pill">hosts never mixed</span></div>
+    </div>`;
+    bindTips(body);
+  }
+
+  function openModal(title, sub, html, opener) {
+    hideTip();
+    state.modalOpener = opener || document.activeElement;
+    state.modalOpenedAt = Date.now();
+    modalTitle.textContent = title;
+    modalSub.textContent = sub;
+    modalBody.innerHTML = html;
+    modalBackdrop.hidden = false;
+    modalClose.focus();
+  }
+
+  function closeModal() {
+    if (modalBackdrop.hidden) return;
+    modalBackdrop.hidden = true;
+    if (state.modalOpener && typeof state.modalOpener.focus === "function") {
+      state.modalOpener.focus();
+    }
+    state.modalOpener = null;
+  }
+
+  function openMethodModal(opener) {
+    const run = currentRun();
+    const m = (run && run.machine) || {};
+    const envs = envGroupsList();
+    const fields = [
+      ["Env Group", run ? run.machine_group : "—"],
+      ["Runner", m.runner],
+      ["Run ID", run ? run.id : "—"],
+      ["Date", m.date],
+      ["CPU", m.cpu],
+      ["OS", m.os],
+      ["Cores", m.cores],
+      ["CPU Pin", m.pin],
+      ["Kizu", m.kizu],
+      ["Rust", m.rust],
+      ["Go", m.go],
+      ["Zig", m.zig],
+      ["Clang", m.clang]
+    ].filter(([, v]) => v && v !== "none");
+
+    const kvHtml = fields
+      .map(([k, v]) => `<div class="kv-row"><span class="kv-key">${esc(k)}</span><span class="kv-val">${esc(v)}</span></div>`)
+      .join("");
+
+    const envRows = envs
+      .map(
+        (e) => `<tr>
+          <td><button type="button" class="run-row-btn" data-pick-env="${esc(e.group)}">${esc(e.group)}</button></td>
+          <td>${e.runs.length}</td>
+          <td>${esc(shortDate(e.runs[0]))}</td>
+          <td>${e.group === state.envGroup ? "active" : "—"}</td>
+        </tr>`
+      )
+      .join("");
+
+    const html = `
+      <div class="modal-section">
+        <h3>Recorded Environments (${envs.length})</h3>
+        <p class="modal-note">Benchmarks from different hosts (GitHub Actions Linux x86_64, GitHub Actions macOS arm64, local Linux/WSL2, Colab, etc.) are strictly isolated and never averaged or plotted together.</p>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead><tr><th>Environment</th><th>Runs</th><th>Latest</th><th>Status</th></tr></thead>
+            <tbody>${envRows}</tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Methodology &amp; Fairness</h3>
+        <div class="method-grid">
+          <div class="method-card">
+            <h4>Pinned Toolchains</h4>
+            <p><code>kizu</code>, <code>zig</code>, <code>go</code>, <code>hyperfine</code>, and <code>just</code> are pinned via SHA-256 in <code>kugi.toml</code> + <code>kugi.lock</code>, paired with system <code>clang</code> and host <code>rustc</code> / <code>cargo</code>.</p>
+          </div>
+          <div class="method-card">
+            <h4>Runtime-Sized Inputs</h4>
+            <p>All 6 benchmarks add <code>argc - 1</code> to their workload so compilers cannot constant-fold answers. Every variant is verified to print identical stdout via <code>scripts/check.sh</code>.</p>
+          </div>
+          <div class="method-card">
+            <h4>Explicit Safety &amp; CPU Flags</h4>
+            <p>Baseline CPU variants: <code>kizu-llvm</code>, <code>kizu-direct</code>, <code>rust</code> (<code>-C opt-level=3</code>), <code>c-O2</code>, <code>zig-fast</code>/<code>zig-safe</code> (<code>-mcpu=baseline</code>), <code>go</code>/<code>go-nobounds</code>. Host-tuned: <code>rust-native</code> and <code>c-O3native</code>.</p>
+          </div>
+          <div class="method-card">
+            <h4>Build Caches &amp; Host Isolation</h4>
+            <p>Cold builds start with empty project caches and warm stdlib/runtime caches. Cache sizes measure exact deduplicated bytes of <code>KIZU_CACHE_DIR</code>, Rust <code>target/</code>, <code>GOCACHE</code>, <code>.zig-cache</code>, and C <code>.o</code> files. Hosts are never mixed.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <h3>Selected Run Environment</h3>
+        <div class="kv-grid">${kvHtml}</div>
+      </div>`;
+    openModal("Methodology & Environments", "Strict per-host isolation and active run metadata", html, opener);
+    modalBody.querySelectorAll("[data-pick-env]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectEnvironment(btn.getAttribute("data-pick-env"));
+        closeModal();
+      });
+    });
+  }
+
+  function openRuntimeModal(opener) {
+    const run = currentRun();
+    if (!run || !run.runtime) return;
+    const rt = run.runtime;
+    const programs = state.data.programs;
+    const keys = state.data.variants.filter((v) => rt.variants[v]).sort((a, b) => rt.variants[a].geomean - rt.variants[b].geomean);
     const bestByProg = {};
     programs.forEach((p) => {
-      bestByProg[p] = Math.min(...variantKeys.map((v) => rt.variants[v].programs[p].median));
+      bestByProg[p] = Math.min(...keys.map((v) => rt.variants[v].programs[p].median));
     });
-    const bestGm = Math.min(...variantKeys.map((v) => rt.variants[v].geomean));
+    const bestGm = Math.min(...keys.map((v) => rt.variants[v].geomean));
 
-    const tableRows = variantKeys
+    const rows = keys
       .map((v) => {
         const entry = rt.variants[v];
         const cells = programs
           .map((p) => {
             const c = entry.programs[p];
-            const isBest = Math.abs(c.median - bestByProg[p]) < 0.0005;
-            return `<td class="${isBest ? "best-cell" : ""}">${c.median.toFixed(3)} <span class="muted-ratio">(${c.ratio.toFixed(2)})</span></td>`;
+            const best = Math.abs(c.median - bestByProg[p]) < 0.0005 ? "best" : "";
+            return `<td class="${best}">${c.median.toFixed(3)}s <span class="detail-muted">(${c.ratio.toFixed(2)}×)</span></td>`;
           })
           .join("");
-        const gmBest = Math.abs(entry.geomean - bestGm) < 0.0005;
+        const gmBest = Math.abs(entry.geomean - bestGm) < 0.0005 ? "best" : "";
         const btRss = entry.binarytrees_rss_mb !== undefined ? `${entry.binarytrees_rss_mb.toFixed(1)} MB` : "—";
         const nbRss = entry.nbody_rss_mb !== undefined ? `${entry.nbody_rss_mb.toFixed(1)} MB` : "—";
         const binKb = entry.fib_binary_kb !== undefined ? `${entry.fib_binary_kb.toFixed(0)} KB` : "—";
         return `<tr>
-          <td><span class="variant-cell"><span class="swatch" style="background:${colorOf(v)}"></span>${esc(v)}</span></td>
+          <td><span class="variant-inline"><span class="bar-dot" style="background:${colorOf(v)}"></span><strong>${esc(v)}</strong></span></td>
           ${cells}
-          <td class="${gmBest ? "best-cell" : ""}">${entry.geomean.toFixed(2)}x</td>
+          <td class="${gmBest}">${entry.geomean.toFixed(2)}×</td>
           <td>${btRss}</td>
           <td>${nbRss}</td>
           <td>${binKb}</td>
@@ -404,155 +1184,92 @@
       })
       .join("");
 
-    let instrHtml = "";
+    let instrSection = "";
     if (rt.has_instructions) {
-      const instrRows = variantKeys
+      const iRows = keys
         .map((v) => {
           const entry = rt.variants[v];
           const cells = programs
             .map((p) => {
               const c = entry.programs[p];
               if (c.instructions_g === null || c.instructions_g === undefined) return `<td>—</td>`;
-              return `<td>${c.instructions_g.toFixed(2)}G <span class="muted-ratio">(${c.instructions_ratio.toFixed(2)})</span></td>`;
+              return `<td>${c.instructions_g.toFixed(2)}G <span class="detail-muted">(${c.instructions_ratio.toFixed(2)}×)</span></td>`;
             })
             .join("");
-          return `<tr><td><span class="variant-cell"><span class="swatch" style="background:${colorOf(v)}"></span>${esc(v)}</span></td>${cells}</tr>`;
+          return `<tr><td><span class="variant-inline"><span class="bar-dot" style="background:${colorOf(v)}"></span>${esc(v)}</span></td>${cells}</tr>`;
         })
         .join("");
-      instrHtml = `<div class="card">
-        <div class="card-head">
-          <div>
-            <h2 class="card-title">Instruction Count (Valgrind Cachegrind)</h2>
-            <p class="card-sub">Billions of executed instructions (10^9) and ratio vs C -O2. Independent of host CPU load.</p>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr><th>Variant</th>${programs.map((p) => `<th>${p}</th>`).join("")}</tr></thead>
-            <tbody>${instrRows}</tbody>
+      instrSection = `<div class="modal-section">
+        <h3>Instruction Count (Valgrind Cachegrind)</h3>
+        <p class="modal-note">Billions of executed instructions (10^9) and ratio vs C -O2.</p>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead><tr><th>Variant</th>${programs.map((p) => `<th>${esc(p)}</th>`).join("")}</tr></thead>
+            <tbody>${iRows}</tbody>
           </table>
         </div>
       </div>`;
     }
 
-    panel.innerHTML = `
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2 class="card-title">${state.runtimeProg === "geomean" ? "Runtime Geometric Mean vs C -O2 (lower is faster)" : `Runtime: ${state.runtimeProg} (median seconds, lower is faster)`}</h2>
-            <p class="card-sub">At least ${rt.min_samples} runs per cell across shuffled rounds. Max spread (max-min)/median: ${(rt.spread * 100).toFixed(1)}%.</p>
-          </div>
-          <div class="pill-group">${pills}</div>
-        </div>
-        <div class="chart-wrap">${buildBarSvg(rows, chartOpts)}</div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2 class="card-title">Full Runtime Breakdown</h2>
-            <p class="card-sub">Median wall seconds with (ratio vs C -O2), peak RSS, and compiled binary size.</p>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Variant</th>
-                ${programs.map((p) => `<th>${p}</th>`).join("")}
-                <th>Geomean</th>
-                <th>bt RSS</th>
-                <th>nbody RSS</th>
-                <th>fib bin</th>
-              </tr>
-            </thead>
-            <tbody>${tableRows}</tbody>
+    const html = `
+      <div class="modal-section">
+        <h3>Full Runtime Breakdown</h3>
+        <p class="modal-note">Median wall seconds (ratio vs C -O2), peak RSS, and compiled binary size. ${rt.min_samples}+ shuffled rounds per cell; max spread ${(rt.spread * 100).toFixed(1)}%.</p>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead><tr><th>Variant</th>${programs.map((p) => `<th>${esc(p)}</th>`).join("")}<th>Geomean</th><th>bt RSS</th><th>nbody RSS</th><th>fib bin</th></tr></thead>
+            <tbody>${rows}</tbody>
           </table>
         </div>
       </div>
-      ${instrHtml}
-    `;
-
-    panel.querySelectorAll("[data-rt-prog]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        state.runtimeProg = btn.getAttribute("data-rt-prog");
-        renderRuntime(run);
-      });
-    });
-    bindTips(panel);
+      ${instrSection}`;
+    openModal("Runtime Details", `${run.id} · ${run.machine_group}`, html, opener);
   }
 
-  function renderCompile(run) {
-    const panel = document.getElementById("panel-compile");
-    if (!run.compile) {
-      panel.innerHTML = `<div class="card"><div class="empty-note">No compile-speed data in this run.</div></div>`;
-      return;
-    }
+  function openCompileModal(opener) {
+    const run = currentRun();
+    if (!run || !run.compile) return;
     const cp = run.compile;
-    const sizes = cp.sizes;
-    if (!sizes.includes(state.compileSize)) {
-      state.compileSize = sizes[sizes.length - 1];
-    }
-
-    const scenarios = [
-      ["cold", "Cold (from scratch)"],
-      ["edit", "1-Function Edit"],
-      ["noop", "Unchanged (no-op)"],
+    const sizes = cp.sizes || [];
+    const phases = [
+      ["cold", "Cold Build (from scratch)"],
+      ["edit", "1-Function Edit (incremental)"],
+      ["noop", "Unchanged (no-op rebuild)"],
       ["check", "Type-Check Only"]
     ];
-    const groups = [
-      ["all", "All"],
-      ["noopt", "No-opt / Debug"],
-      ["opt", "Opt / Release"]
-    ];
 
-    const scData = (cp.scenarios[state.compileScenario] || {})[state.compileSize] || {};
-    let orderedKeys;
-    if (state.compileScenario === "check") {
-      orderedKeys = state.data.compile_variants.check.filter((k) => scData[k]);
-    } else if (state.compileGroup === "noopt") {
-      orderedKeys = state.data.compile_variants.noopt.filter((k) => scData[k]);
-    } else if (state.compileGroup === "opt") {
-      orderedKeys = state.data.compile_variants.opt.filter((k) => scData[k]);
-    } else {
-      orderedKeys = [
-        ...state.data.compile_variants.noopt,
-        ...state.data.compile_variants.opt
-      ].filter((k) => scData[k]);
-    }
-
-    const rows = orderedKeys
-      .map((k) => {
-        const v = scData[k];
-        return {
-          name: k,
-          value: v.wall,
-          label: `${v.wall.toFixed(2)}s (CPU ${v.cpu.toFixed(2)}s)`,
-          tip: `<strong>${k} · ${state.compileSize} · ${state.compileScenario}</strong><br>Wall median: ${v.wall.toFixed(3)}s<br>CPU median: ${v.cpu.toFixed(3)}s`
-        };
-      })
-      .sort((a, b) => a.value - b.value);
-
-    const tableKeys = state.compileScenario === "check"
-      ? state.data.compile_variants.check
-      : [...state.data.compile_variants.noopt, ...state.data.compile_variants.opt];
-    const presentKeys = tableKeys.filter((k) =>
-      sizes.some((sz) => ((cp.scenarios[state.compileScenario] || {})[sz] || {})[k])
-    );
-
-    const tableRows = presentKeys
-      .map((k) => {
-        const cells = sizes
-          .map((sz) => {
-            const v = ((cp.scenarios[state.compileScenario] || {})[sz] || {})[k];
-            if (!v) return `<td>—</td>`;
-            return `<td>${v.wall.toFixed(2)}s <span class="muted-ratio">/ ${v.cpu.toFixed(2)}s</span></td>`;
+    const sections = phases
+      .map(([sc, label]) => {
+        const keys = sc === "check"
+          ? state.data.compile_variants.check
+          : [...state.data.compile_variants.noopt, ...state.data.compile_variants.opt];
+        const present = keys.filter((k) => sizes.some((sz) => ((cp.scenarios[sc] || {})[sz] || {})[k]));
+        if (!present.length) return "";
+        const rows = present
+          .map((k) => {
+            const cells = sizes
+              .map((sz) => {
+                const v = ((cp.scenarios[sc] || {})[sz] || {})[k];
+                if (!v) return `<td>—</td>`;
+                return `<td>${v.wall.toFixed(3)}s <span class="detail-muted">/ ${v.cpu.toFixed(2)}s</span></td>`;
+              })
+              .join("");
+            return `<tr><td><span class="variant-inline"><span class="bar-dot" style="background:${colorOf(k)}"></span>${esc(k)}</span></td>${cells}</tr>`;
           })
           .join("");
-        return `<tr><td><span class="variant-cell"><span class="swatch" style="background:${colorOf(k)}"></span>${esc(k)}</span></td>${cells}</tr>`;
+        return `<div class="modal-section">
+          <h3>${esc(label)}</h3>
+          <div class="table-scroll">
+            <table class="detail-table">
+              <thead><tr><th>Toolchain</th>${sizes.map((s) => `<th>${esc(s)} (wall / CPU)</th>`).join("")}</tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>`;
       })
       .join("");
 
-    let realHtml = "";
+    let realSection = "";
     if (run.real && run.real.length) {
       const rRows = run.real
         .map(
@@ -565,287 +1282,143 @@
           </tr>`
         )
         .join("");
-      realHtml = `<div class="card">
-        <div class="card-head">
-          <div>
-            <h2 class="card-title">Real-World Codebases</h2>
-            <p class="card-sub">Self-hosting Kizu compiler vs Go <code>cmd/compile</code>.</p>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr><th>Target</th><th>LOC (non-blank)</th><th>Wall</th><th>CPU</th><th>LOC / sec</th></tr></thead>
+      realSection = `<div class="modal-section">
+        <h3>Real-World Codebases</h3>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead><tr><th>Target</th><th>LOC</th><th>Wall</th><th>CPU</th><th>LOC / sec</th></tr></thead>
             <tbody>${rRows}</tbody>
           </table>
         </div>
       </div>`;
     }
 
-    panel.innerHTML = `
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2 class="card-title">Compile Speed — ${esc(state.compileSize)} (${esc(state.compileScenario)})</h2>
-            <p class="card-sub">Generated multi-module programs: m10 (~7k LOC), m40 (~28k LOC), m160 (~113k LOC). Lower is faster.</p>
-          </div>
-        </div>
-        <div class="controls-bar">
-          <div class="pill-group">${scenarios.map(([id, lbl]) => `<button class="pill ${state.compileScenario === id ? "active" : ""}" data-cp-sc="${id}">${lbl}</button>`).join("")}</div>
-          <div class="pill-group">${sizes.map((sz) => `<button class="pill ${state.compileSize === sz ? "active" : ""}" data-cp-sz="${sz}">${sz}</button>`).join("")}</div>
-          ${state.compileScenario !== "check" ? `<div class="pill-group">${groups.map(([id, lbl]) => `<button class="pill ${state.compileGroup === id ? "active" : ""}" data-cp-gr="${id}">${lbl}</button>`).join("")}</div>` : ""}
-        </div>
-        <div class="chart-wrap">${rows.length ? buildBarSvg(rows, { tickFmt: (v) => v.toFixed(1) + "s", aria: "Compile speed bar chart" }) : `<div class="empty-note">No entries for this selection.</div>`}</div>
-      </div>
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2 class="card-title">Compile Speed Table (${esc(state.compileScenario)})</h2>
-            <p class="card-sub">Median wall / CPU seconds across project sizes.</p>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr><th>Toolchain</th>${sizes.map((s) => `<th>${s}</th>`).join("")}</tr></thead>
-            <tbody>${tableRows}</tbody>
-          </table>
-        </div>
-      </div>
-      ${realHtml}
-    `;
-
-    panel.querySelectorAll("[data-cp-sc]").forEach((b) =>
-      b.addEventListener("click", () => {
-        state.compileScenario = b.getAttribute("data-cp-sc");
-        renderCompile(run);
-      })
-    );
-    panel.querySelectorAll("[data-cp-sz]").forEach((b) =>
-      b.addEventListener("click", () => {
-        state.compileSize = b.getAttribute("data-cp-sz");
-        renderCompile(run);
-      })
-    );
-    panel.querySelectorAll("[data-cp-gr]").forEach((b) =>
-      b.addEventListener("click", () => {
-        state.compileGroup = b.getAttribute("data-cp-gr");
-        renderCompile(run);
-      })
-    );
-    bindTips(panel);
+    openModal("Compile Speed Details", `${run.id} · ${run.machine_group}`, sections + realSection, opener);
   }
 
-  function renderCache(run) {
-    const panel = document.getElementById("panel-cache");
+  function openCacheModal(opener) {
+    const run = currentRun();
+    if (!run || !run.compile) return;
     const cp = run.compile;
-    if (!cp) {
-      panel.innerHTML = `<div class="card"><div class="empty-note">No build cache or compiler memory data in this run.</div></div>`;
-      return;
-    }
-    const cacheSizes = Object.keys(cp.cache || {});
-    let cacheCard;
-    if (!cacheSizes.length) {
-      const m4 = state.data.runs.find((r) => r.compile && Object.keys(r.compile.cache || {}).length);
-      const hint = m4 ? ` Select <strong>${esc(m4.id)}</strong> above to inspect full build cache size measurements.` : "";
-      cacheCard = `<div class="card">
-        <div class="card-head"><div><h2 class="card-title">Build Cache Size (MB)</h2></div></div>
-        <div class="empty-note">This historical run predates build cache size recording.${hint}</div>
-      </div>`;
-    } else {
-      if (!cacheSizes.includes(state.cacheSize)) {
-        state.cacheSize = cacheSizes[cacheSizes.length - 1];
-      }
-      const cdata = cp.cache[state.cacheSize];
-      const allKeys = [...state.data.compile_variants.noopt, ...state.data.compile_variants.opt].filter((k) => cdata[k]);
-      const field = state.cacheMode === "project" ? "project_mb" : "total_mb";
-      const rows = allKeys
-        .map((k) => {
-          const e = cdata[k];
-          const val = e[field];
-          return {
-            name: k,
-            value: val,
-            label: `${val.toFixed(2)} MB (${e.files} files)`,
-            tip: `<strong>${k} · ${state.cacheSize}</strong><br>Total cache dir: ${e.total_mb.toFixed(2)} MB<br>Project delta: ${e.project_mb.toFixed(2)} MB<br>Stdlib/runtime seed: ${e.seed_mb.toFixed(2)} MB<br>Files: ${e.files.toLocaleString()}`
-          };
-        })
-        .sort((a, b) => a.value - b.value);
+    const allKeys = [...state.data.compile_variants.noopt, ...state.data.compile_variants.opt];
+    const sections = [];
 
-      const tableRows = allKeys
+    const cacheSizes = Object.keys(cp.cache || {});
+    if (cacheSizes.length) {
+      const present = allKeys.filter((k) => cacheSizes.some((sz) => (cp.cache[sz] || {})[k]));
+      const rows = present
         .map((k) => {
           const cells = cacheSizes
             .map((sz) => {
               const e = (cp.cache[sz] || {})[k];
               if (!e) return `<td>—</td>`;
-              const v = e[field];
-              return `<td>${v.toFixed(2)} MB <span class="muted-ratio">(${e.files})</span></td>`;
+              return `<td>${e.total_mb.toFixed(2)} MB <span class="detail-muted">(Δ ${e.project_mb.toFixed(2)}, ${e.files}f)</span></td>`;
             })
             .join("");
-          return `<tr><td><span class="variant-cell"><span class="swatch" style="background:${colorOf(k)}"></span>${esc(k)}</span></td>${cells}</tr>`;
+          return `<tr><td><span class="variant-inline"><span class="bar-dot" style="background:${colorOf(k)}"></span>${esc(k)}</span></td>${cells}</tr>`;
         })
         .join("");
-
-      cacheCard = `
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h2 class="card-title">Build Cache Size — ${esc(state.cacheSize)} (${state.cacheMode === "project" ? "Project delta" : "Total cache dir"}, MB)</h2>
-              <p class="card-sub">Disk footprint after a clean cold build: Kizu cache dir, Rust <code>target/</code>, Go <code>GOCACHE</code>, Zig cache, C <code>.o</code> objects. Lower is smaller.</p>
-            </div>
-          </div>
-          <div class="controls-bar">
-            <div class="pill-group">${cacheSizes.map((sz) => `<button class="pill ${state.cacheSize === sz ? "active" : ""}" data-ca-sz="${sz}">${sz}</button>`).join("")}</div>
-            <div class="pill-group">
-              <button class="pill ${state.cacheMode === "total" ? "active" : ""}" data-ca-mode="total">Total cache dir</button>
-              <button class="pill ${state.cacheMode === "project" ? "active" : ""}" data-ca-mode="project">Project delta (excl. seed)</button>
-            </div>
-          </div>
-          <div class="chart-wrap">${buildBarSvg(rows, { tickFmt: (v) => v.toFixed(0) + " MB", aria: "Build cache size bar chart" })}</div>
+      sections.push(`<div class="modal-section">
+        <h3>Build Cache Footprint (Total MB, Project Delta, Files)</h3>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead><tr><th>Toolchain</th>${cacheSizes.map((s) => `<th>${esc(s)}</th>`).join("")}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
         </div>
-        <div class="card">
-          <div class="card-head">
-            <div>
-              <h2 class="card-title">Build Cache Size Table (MB &amp; file count)</h2>
-              <p class="card-sub">Measured with inode-deduplicated exact file bytes across m10 / m40 / m160.</p>
-            </div>
-          </div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr><th>Toolchain</th>${cacheSizes.map((s) => `<th>${s}</th>`).join("")}</tr></thead>
-              <tbody>${tableRows}</tbody>
-            </table>
-          </div>
-        </div>
-      `;
+      </div>`);
+    } else {
+      sections.push(`<div class="modal-section">
+        <h3>Build Cache Footprint</h3>
+        <p class="modal-note">This historical run predates <code>cache.json</code> build cache size measurements.</p>
+      </div>`);
     }
 
-    const rss = cp.rss_mb || {};
-    const rssKeys = [...state.data.compile_variants.noopt, ...state.data.compile_variants.opt].filter((k) => rss[k] !== undefined);
-    const rssRows = rssKeys
-      .map((k) => ({
-        name: k,
-        value: rss[k],
-        label: `${rss[k].toFixed(0)} MB`,
-        tip: `<strong>${k}</strong><br>Peak compiler RSS on ${cp.sizes[cp.sizes.length - 1]} cold build: ${rss[k].toFixed(1)} MB`
-      }))
-      .sort((a, b) => a.value - b.value);
-
-    const rssCard = `<div class="card">
-      <div class="card-head">
-        <div>
-          <h2 class="card-title">Compiler Peak RSS — ${esc(cp.sizes[cp.sizes.length - 1])} Cold Build (MB)</h2>
-          <p class="card-sub">Peak resident set size during cold build of the largest generated benchmark.</p>
+    const rssSizes = Object.keys(cp.rss_by_size || {});
+    if (rssSizes.length) {
+      const present = allKeys.filter((k) => rssSizes.some((sz) => (cp.rss_by_size[sz] || {})[k] !== undefined));
+      const rows = present
+        .map((k) => {
+          const cells = rssSizes
+            .map((sz) => {
+              const v = (cp.rss_by_size[sz] || {})[k];
+              return v === undefined ? `<td>—</td>` : `<td>${v.toFixed(1)} MB</td>`;
+            })
+            .join("");
+          return `<tr><td><span class="variant-inline"><span class="bar-dot" style="background:${colorOf(k)}"></span>${esc(k)}</span></td>${cells}</tr>`;
+        })
+        .join("");
+      sections.push(`<div class="modal-section">
+        <h3>Compiler Peak RSS (Cold Build)</h3>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead><tr><th>Toolchain</th>${rssSizes.map((s) => `<th>${esc(s)}</th>`).join("")}</tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
         </div>
-      </div>
-      <div class="chart-wrap">${rssRows.length ? buildBarSvg(rssRows, { tickFmt: (v) => v.toFixed(0) + " MB", aria: "Compiler peak RSS bar chart" }) : `<div class="empty-note">No RSS data recorded.</div>`}</div>
-    </div>`;
+      </div>`);
+    }
 
-    panel.innerHTML = cacheCard + rssCard;
-    panel.querySelectorAll("[data-ca-sz]").forEach((b) =>
-      b.addEventListener("click", () => {
-        state.cacheSize = b.getAttribute("data-ca-sz");
-        renderCache(run);
-      })
-    );
-    panel.querySelectorAll("[data-ca-mode]").forEach((b) =>
-      b.addEventListener("click", () => {
-        state.cacheMode = b.getAttribute("data-ca-mode");
-        renderCache(run);
-      })
-    );
-    bindTips(panel);
+    openModal("Cache Size & Peak RSS", `${run.id} · ${run.machine_group}`, sections.join(""), opener);
   }
 
-  function renderHistory(run) {
-    const panel = document.getElementById("panel-history");
-    const sameMachine = state.data.runs
-      .filter((r) => r.machine_group === run.machine_group)
-      .slice()
-      .sort((a, b) => (a.machine.date || a.id).localeCompare(b.machine.date || b.id));
+  function openHistoryModal(opener) {
+    const run = currentRun();
+    if (!run) return;
+    const runs = sameHostRuns(run);
+    const abs = sameHostAb(run);
 
-    const xLabels = sameMachine.map((r) => `${r.id.slice(0, 10)} (${shortKizu(r.machine.kizu)})`);
-    const rtSeries = [
-      {
-        name: "kizu-llvm",
-        color: colorOf("kizu-llvm"),
-        points: sameMachine.map((r) => (r.runtime && r.runtime.variants["kizu-llvm"] ? r.runtime.variants["kizu-llvm"].geomean : null))
-      },
-      {
-        name: "kizu-direct",
-        color: colorOf("kizu-direct"),
-        points: sameMachine.map((r) => (r.runtime && r.runtime.variants["kizu-direct"] ? r.runtime.variants["kizu-direct"].geomean : null))
-      }
-    ];
-    const cpSeries = [
-      {
-        name: "kizu-direct (m160 cold)",
-        color: colorOf("kizu-direct"),
-        points: sameMachine.map((r) => {
-          const m = r.compile && r.compile.scenarios.cold && r.compile.scenarios.cold.m160;
-          return m && m["kizu-direct"] ? m["kizu-direct"].wall : null;
-        })
-      },
-      {
-        name: "kizu-llvm (m160 cold)",
-        color: colorOf("kizu-llvm"),
-        points: sameMachine.map((r) => {
-          const m = r.compile && r.compile.scenarios.cold && r.compile.scenarios.cold.m160;
-          return m && m["kizu-llvm"] ? m["kizu-llvm"].wall : null;
-        })
-      }
-    ];
-
-    const runTable = sameMachine
+    const runRows = runs
       .map((r) => {
         const v = r.runtime ? r.runtime.variants : {};
-        const kl = v["kizu-llvm"] ? `${v["kizu-llvm"].geomean.toFixed(2)}x` : "—";
-        const kd = v["kizu-direct"] ? `${v["kizu-direct"].geomean.toFixed(2)}x` : "—";
-        const c160 = (r.compile && r.compile.scenarios.cold && r.compile.scenarios.cold.m160) || {};
-        const cd = c160["kizu-direct"] ? `${c160["kizu-direct"].wall.toFixed(2)}s` : "—";
-        const cl = c160["kizu-llvm"] ? `${c160["kizu-llvm"].wall.toFixed(2)}s` : "—";
+        const kl = v["kizu-llvm"] ? `${v["kizu-llvm"].geomean.toFixed(2)}×` : "—";
+        const kd = v["kizu-direct"] ? `${v["kizu-direct"].geomean.toFixed(2)}×` : "—";
+        const ru = v["rust"] ? `${v["rust"].geomean.toFixed(2)}×` : "—";
+        const sz = r.compile && r.compile.sizes && r.compile.sizes.length ? r.compile.sizes[r.compile.sizes.length - 1] : "m160";
+        const c = (r.compile && r.compile.scenarios.cold && r.compile.scenarios.cold[sz]) || {};
+        const cd = c["kizu-direct"] ? fmtSec(c["kizu-direct"].wall) : "—";
+        const cl = c["kizu-llvm"] ? fmtSec(c["kizu-llvm"].wall) : "—";
+        const ca = (r.compile && r.compile.cache && r.compile.cache[sz] && r.compile.cache[sz]["kizu-direct"])
+          ? fmtMb(r.compile.cache[sz]["kizu-direct"].total_mb)
+          : "—";
         return `<tr>
-          <td>${esc(r.id)}</td>
-          <td>${esc(shortKizu(r.machine.kizu))}</td>
+          <td><button type="button" class="run-row-btn" data-pick-run="${esc(r.id)}">${esc(r.id)}</button></td>
+          <td>${esc(shortKizu(r.machine && r.machine.kizu))}</td>
           <td>${kl}</td>
           <td>${kd}</td>
+          <td>${ru}</td>
           <td>${cd}</td>
           <td>${cl}</td>
+          <td>${ca}</td>
         </tr>`;
       })
       .join("");
 
-    let abHtml = "";
-    if (state.data.compiler_ab && state.data.compiler_ab.length) {
-      abHtml = state.data.compiler_ab
+    let abSections = "";
+    if (abs.length) {
+      abSections = abs
         .map((ab) => {
-          const xl = ab.revs.map((x) => x.rev);
-          const memSeries = [
-            { name: "Max RSS (MB)", color: "#0f766e", points: ab.revs.map((x) => x.rss_mb) },
-            { name: "Massif Heap Peak (MB)", color: "#c2410c", points: ab.revs.map((x) => x.heap_peak_mb) }
-          ];
+          const base = ab.revs[0];
           const trs = ab.revs
-            .map(
-              (x) => `<tr>
+            .map((x) => {
+              const dRss = base && base.rss_mb ? (((x.rss_mb - base.rss_mb) / base.rss_mb) * 100).toFixed(1) + "%" : "—";
+              return `<tr>
                 <td><code>${esc(x.rev)}</code></td>
                 <td>${x.wall.toFixed(2)}s</td>
                 <td>${x.user.toFixed(2)}s</td>
                 <td>${x.sys.toFixed(2)}s</td>
-                <td>${x.rss_mb.toFixed(0)} MB</td>
+                <td>${x.rss_mb.toFixed(0)} MB <span class="detail-muted">(${dRss})</span></td>
                 <td>${x.heap_peak_mb !== null ? x.heap_peak_mb.toFixed(0) + " MB" : "—"}</td>
                 <td>${x.instructions_g !== null ? x.instructions_g.toFixed(2) + "G" : "—"}</td>
-              </tr>`
-            )
+              </tr>`;
+            })
             .join("");
-          return `<div class="card">
-            <div class="card-head">
-              <div>
-                <h2 class="card-title">Compiler A/B Memory &amp; Speed Progression (${esc(ab.id)})</h2>
-                <p class="card-sub">${esc(ab.machine_group)} · Input: <code>${esc(ab.input || "compiler/")}</code></p>
-              </div>
-            </div>
-            <div class="chart-wrap">${buildLineSvg(memSeries, xl, { zeroBase: true, yFmt: (v) => v.toFixed(0) + " MB", aria: "Compiler A/B memory progression" })}</div>
-            <div class="table-wrap" style="margin-top:14px">
-              <table class="data-table">
-                <thead><tr><th>Rev</th><th>Wall</th><th>User</th><th>Sys</th><th>Max RSS</th><th>Heap Peak</th><th>Instructions</th></tr></thead>
+          return `<div class="modal-section">
+            <h3>Compiler A/B (${esc(ab.id)})</h3>
+            <p class="modal-note">Input: <code>${esc(ab.input || "compiler/")}</code></p>
+            <div class="table-scroll">
+              <table class="detail-table">
+                <thead><tr><th>Rev</th><th>Wall</th><th>User</th><th>Sys</th><th>Max RSS</th><th>Heap Peak</th><th>Instr</th></tr></thead>
                 <tbody>${trs}</tbody>
               </table>
             </div>
@@ -854,7 +1427,7 @@
         .join("");
     }
 
-    let heapHtml = "";
+    let heapSection = "";
     if (state.data.compiler_heap && state.data.compiler_heap.length) {
       const hRows = state.data.compiler_heap
         .map(
@@ -868,15 +1441,10 @@
           </tr>`
         )
         .join("");
-      heapHtml = `<div class="card">
-        <div class="card-head">
-          <div>
-            <h2 class="card-title">Compiler Heap Snapshots (Massif, Linux)</h2>
-            <p class="card-sub">Self-hosting compiler peak memory profiles from <code>just heap</code>.</p>
-          </div>
-        </div>
-        <div class="table-wrap">
-          <table class="data-table">
+      heapSection = `<div class="modal-section">
+        <h3>Compiler Heap Snapshots (Massif)</h3>
+        <div class="table-scroll">
+          <table class="detail-table">
             <thead><tr><th>Run</th><th>Rev</th><th>Max RSS</th><th>Heap Peak</th><th>Pages Peak</th><th>Wall</th></tr></thead>
             <tbody>${hRows}</tbody>
           </table>
@@ -884,33 +1452,32 @@
       </div>`;
     }
 
-    panel.innerHTML = `
-      <div class="card">
-        <div class="card-head">
-          <div>
-            <h2 class="card-title">Same-Machine Kizu Progression — ${esc(run.machine_group)}</h2>
-            <p class="card-sub">Tracks <code>kizu-llvm</code> and <code>kizu-direct</code> across runs on this host only (${sameMachine.length} run${sameMachine.length === 1 ? "" : "s"}).</p>
-          </div>
-        </div>
-        <div class="chart-wrap">${buildLineSvg(rtSeries, xLabels, { zeroBase: false, yFmt: (v) => v.toFixed(2) + "x", aria: "Runtime geomean progression" })}</div>
-        <div class="chart-wrap" style="margin-top:16px">${buildLineSvg(cpSeries, xLabels, { zeroBase: true, yFmt: (v) => v.toFixed(2) + "s", aria: "Compile speed progression" })}</div>
-        <div class="table-wrap" style="margin-top:14px">
-          <table class="data-table">
-            <thead><tr><th>Run</th><th>Kizu</th><th>kizu-llvm rt</th><th>kizu-direct rt</th><th>kizu-direct m160</th><th>kizu-llvm m160</th></tr></thead>
-            <tbody>${runTable}</tbody>
-          </table>
-        </div>
+    const html = `<div class="modal-section">
+      <h3>Same-Host Runs (${runs.length})</h3>
+      <p class="modal-note">Click any run ID to inspect it in the cockpit. Runs from different machines are strictly separated.</p>
+      <div class="table-scroll">
+        <table class="detail-table">
+          <thead><tr><th>Run</th><th>Kizu</th><th>llvm rt</th><th>direct rt</th><th>rust rt</th><th>direct cold</th><th>llvm cold</th><th>cache</th></tr></thead>
+          <tbody>${runRows}</tbody>
+        </table>
       </div>
-      ${abHtml}
-      ${heapHtml}
-    `;
-    bindTips(panel);
+    </div>${abSections}${heapSection}`;
+
+    openModal("Host History & Progression", run.machine_group, html, opener);
+    modalBody.querySelectorAll("[data-pick-run]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        state.runId = btn.getAttribute("data-pick-run");
+        document.getElementById("run-select").value = state.runId;
+        syncRunDefaults(currentRun());
+        renderAll();
+        closeModal();
+      });
+    });
   }
 
   function renderAll() {
     const run = currentRun();
     if (!run) return;
-    renderMeta(run);
     renderKpis(run);
     renderRuntime(run);
     renderCompile(run);
@@ -918,27 +1485,49 @@
     renderHistory(run);
   }
 
-  function setTab(tab) {
-    state.tab = tab;
-    document.querySelectorAll(".tab").forEach((b) => {
-      const on = b.getAttribute("data-tab") === tab;
-      b.classList.toggle("active", on);
-      b.setAttribute("aria-selected", on ? "true" : "false");
-    });
-    ["runtime", "compile", "cache", "history"].forEach((id) => {
-      const el = document.getElementById("panel-" + id);
-      el.hidden = id !== tab;
-      el.classList.toggle("active", id === tab);
-    });
-  }
-
-  document.querySelectorAll(".tab").forEach((btn) => {
-    btn.addEventListener("click", () => setTab(btn.getAttribute("data-tab")));
-  });
-
   document.getElementById("run-select").addEventListener("change", (e) => {
     state.runId = e.target.value;
+    const run = currentRun();
+    if (run) syncRunDefaults(run);
     renderAll();
+  });
+
+  document.getElementById("btn-method").addEventListener("click", (e) => {
+    openMethodModal(e.currentTarget);
+  });
+
+  document.getElementById("iso-badge").addEventListener("click", (e) => {
+    openMethodModal(e.currentTarget);
+  });
+
+  document.querySelectorAll("[data-expand]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const kind = btn.getAttribute("data-expand");
+      if (kind === "runtime") openRuntimeModal(btn);
+      else if (kind === "compile") openCompileModal(btn);
+      else if (kind === "cache") openCacheModal(btn);
+      else if (kind === "history") openHistoryModal(btn);
+    });
+  });
+
+  modalClose.addEventListener("click", closeModal);
+
+  modalBackdrop.addEventListener("pointerdown", (e) => {
+    state.backdropDown = e.target === modalBackdrop;
+  });
+
+  modalBackdrop.addEventListener("click", (e) => {
+    if (Date.now() - state.modalOpenedAt < 260) return;
+    if (state.backdropDown && e.target === modalBackdrop) {
+      closeModal();
+    }
+    state.backdropDown = false;
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !modalBackdrop.hidden) {
+      closeModal();
+    }
   });
 
   fetch("data.json")
@@ -948,10 +1537,12 @@
     })
     .then((data) => {
       state.data = data;
-      populateRunSelect();
-      renderAll();
+      const envs = envGroupsList();
+      if (envs.length) {
+        selectEnvironment(envs[0].group, envs[0].runs[0] ? envs[0].runs[0].id : null);
+      }
     })
     .catch((err) => {
-      document.getElementById("panel-runtime").innerHTML = `<div class="card"><div class="empty-note">Failed to load <code>data.json</code>: ${esc(err.message)}</div></div>`;
+      document.getElementById("body-runtime").innerHTML = `<div class="empty-box">Failed to load <code>data.json</code>: ${esc(err.message)}</div>`;
     });
 })();
