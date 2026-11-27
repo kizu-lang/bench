@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kizu-lang / bench</title>
+  <meta name="description" content="Reproducible runtime, compile-speed, build-cache, and memory benchmarks comparing Kizu against Rust, C, Zig, and Go.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <span class="brand-mark">kizu</span>
+        <span class="brand-sep">/</span>
+        <h1 class="brand-title">bench</h1>
+      </div>
+      <nav class="header-links" aria-label="External links">
+        <a href="https://github.com/kizu-lang/kizu" target="_blank" rel="noopener">kizu-lang/kizu</a>
+        <a href="https://github.com/kizu-lang/bench" target="_blank" rel="noopener">kizu-lang/bench</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="toolbar" aria-label="Run selection">
+      <div class="toolbar-primary">
+        <label for="run-select" class="field-label">Machine &amp; Run</label>
+        <select id="run-select" class="run-select"></select>
+        <span class="isolation-badge">Per-machine isolated: runs from different hosts are never mixed</span>
+      </div>
+      <div id="machine-meta" class="machine-meta"></div>
+    </section>
+
+    <section id="kpi-row" class="kpi-row" aria-label="Key metrics"></section>
+
+    <nav class="tabs" role="tablist" aria-label="Benchmark views">
+      <button class="tab active" role="tab" aria-selected="true" data-tab="runtime">Runtime</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="compile">Compile Speed</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="cache">Cache Size &amp; RSS</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="history">History</button>
+    </nav>
+
+    <section id="panel-runtime" class="panel active" role="tabpanel"></section>
+    <section id="panel-compile" class="panel" role="tabpanel" hidden></section>
+    <section id="panel-cache" class="panel" role="tabpanel" hidden></section>
+    <section id="panel-history" class="panel" role="tabpanel" hidden></section>
+
+    <section class="methodology" aria-label="Methodology">
+      <h2>Methodology &amp; Fairness</h2>
+      <div class="method-grid">
+        <div class="method-card">
+          <h3>Pinned Toolchains</h3>
+          <p><code>kizu</code>, <code>zig</code>, <code>go</code>, <code>hyperfine</code>, and <code>just</code> are pinned via SHA-256 in <code>kugi.toml</code> + <code>kugi.lock</code>, paired with system <code>clang</code> and host <code>rustc</code> / <code>cargo</code>.</p>
+        </div>
+        <div class="method-card">
+          <h3>Runtime-Sized Inputs</h3>
+          <p>All 6 benchmarks add <code>argc - 1</code> to their workload so compilers cannot constant-fold answers. Every variant is verified to print identical stdout via <code>scripts/check.sh</code>.</p>
+        </div>
+        <div class="method-card">
+          <h3>Explicit Safety &amp; CPU Flags</h3>
+          <p>Baseline CPU variants: <code>kizu-llvm</code>, <code>kizu-direct</code>, <code>rust</code> (<code>-C opt-level=3</code>), <code>c-O2</code>, <code>zig-fast</code>/<code>zig-safe</code> (<code>-mcpu=baseline</code>), <code>go</code>/<code>go-nobounds</code>. Host-tuned variants: <code>rust-native</code> (<code>-C target-cpu=native</code>) and <code>c-O3native</code> (<code>-O3 -march/-mcpu=native</code>).</p>
+        </div>
+        <div class="method-card">
+          <h3>Build Caches &amp; Host Separation</h3>
+          <p>Cold builds start with empty project caches and warm stdlib/runtime caches. Cache sizes record exact bytes of <code>KIZU_CACHE_DIR</code>, Rust <code>target/</code>, <code>GOCACHE</code>, <code>.zig-cache</code>, and C <code>.o</code> files. macOS Apple Silicon and Linux x86_64 runs are always kept separate.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>Data generated from <code>results/</code> via <code>scripts/build-site-data.py</code>.</span>
+      <a href="https://github.com/kizu-lang/bench/tree/main/results" target="_blank" rel="noopener">Raw JSON &amp; Markdown results</a>
+    </div>
+  </footer>
+
+  <div id="tooltip" class="tooltip" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
