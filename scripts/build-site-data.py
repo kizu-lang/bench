@@ -43,6 +43,27 @@ def parse_machine(path):
     return info
 
 
+def parse_kizu_info(machine):
+    raw = machine.get("kizu", "")
+    commit = machine.get("kizu_commit", "").strip()
+    m = re.search(r"kizu\s+([^\s]+)\s+\(([0-9a-f]+)", raw)
+    if m:
+        ver, sha = m.group(1), m.group(2)
+        if not commit:
+            commit = sha
+        label = f"{ver} ({commit[:12]})" if ver == "devel" else ver
+        return label, commit[:12]
+    m_ver = re.search(r"kizu\s+([^\s]+)", raw)
+    if m_ver:
+        ver = m_ver.group(1)
+        if ver == "devel" and commit:
+            return f"devel ({commit[:12]})", commit[:12]
+        return ver, commit[:12] if commit else ""
+    if commit:
+        return f"devel ({commit[:12]})", commit[:12]
+    return "", ""
+
+
 def machine_group_label(machine, run_id=""):
     os_str = machine.get("os", "")
     parts = os_str.split()
@@ -391,11 +412,14 @@ def build_data():
             if not rt and not cp:
                 continue
             machine = parse_machine(os.path.join(rdir, "machine.txt"))
+            kizu_label, kizu_commit = parse_kizu_info(machine)
             runs.append(
                 {
                     "id": name,
                     "kind": "compare",
                     "machine_group": machine_group_label(machine, name),
+                    "kizu_label": kizu_label,
+                    "kizu_commit": kizu_commit,
                     "machine": machine,
                     "runtime": rt,
                     "compile": cp,

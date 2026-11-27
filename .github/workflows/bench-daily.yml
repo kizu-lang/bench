@@ -10,6 +10,19 @@ on:
         type: boolean
         required: false
         default: true
+      kizu_source:
+        description: Which kizu compiler to benchmark (main HEAD or pinned kugi.toml release)
+        type: choice
+        required: false
+        default: main
+        options:
+          - main
+          - pinned
+      kizu_ref:
+        description: Git ref of kizu-lang/kizu to build when kizu_source is main
+        type: string
+        required: false
+        default: main
 
 concurrency:
   group: bench-daily
@@ -21,7 +34,7 @@ jobs:
   bench:
     permissions:
       contents: read
-    timeout-minutes: 45
+    timeout-minutes: 55
     strategy:
       fail-fast: false
       matrix:
@@ -46,11 +59,21 @@ jobs:
         shell: bash
         env:
           TARGET_NAME: ${{ matrix.name }}
+          EVENT_NAME: ${{ github.event_name }}
           FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force || false }}
+          INPUT_KIZU_SOURCE: ${{ inputs.kizu_source || 'main' }}
+          INPUT_KIZU_REF: ${{ inputs.kizu_ref || 'main' }}
         run: |
           set -euo pipefail
           RUN_ID="$(date -u +%Y-%m-%d)-gha-${TARGET_NAME}"
           echo "run_id=${RUN_ID}" >> "$GITHUB_OUTPUT"
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "kizu_source=${INPUT_KIZU_SOURCE}" >> "$GITHUB_OUTPUT"
+            echo "kizu_ref=${INPUT_KIZU_REF}" >> "$GITHUB_OUTPUT"
+          else
+            echo "kizu_source=main" >> "$GITHUB_OUTPUT"
+            echo "kizu_ref=main" >> "$GITHUB_OUTPUT"
+          fi
           if [ -d "results/${RUN_ID}" ]; then
             if [ "${FORCE}" = "true" ]; then
               rm -rf "results/${RUN_ID}"
@@ -116,6 +139,53 @@ jobs:
         run: |
           set -euo pipefail
           kugi sync
+
+      - name: Checkout kizu-lang/kizu
+        if: steps.prep.outputs.skip != 'true' && steps.prep.outputs.kizu_source == 'main'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          repository: kizu-lang/kizu
+          ref: ${{ steps.prep.outputs.kizu_ref }}
+          path: .kizu-src
+          fetch-depth: 1
+
+      - name: Build kizu from source
+        if: steps.prep.outputs.skip != 'true' && steps.prep.outputs.kizu_source == 'main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          kizu_commit="$(git -C .kizu-src rev-parse --short=12 HEAD)"
+          prefix="${RUNNER_TEMP}/kizu-main"
+          rm -rf "${prefix}"
+          mkdir -p "${prefix}/bin" "${prefix}/lib"
+          kugi exec -- bash -euo pipefail -c '
+            cd .kizu-src
+            scripts/gen-selfhost-version.sh
+            KIZU_LIB_DIR="" KIZU_CACHE_DIR="'"${RUNNER_TEMP}/kizu-seed-cache"'" kizu build --target native --opt --backend llvm -o "'"${prefix}/bin/kizu"'" compiler
+          '
+          cp -R .kizu-src/lib/kizu "${prefix}/lib/kizu"
+          rm -rf .kizu-src "${RUNNER_TEMP}/kizu-seed-cache"
+          ver="$(KIZU_LIB_DIR="${prefix}/lib/kizu" "${prefix}/bin/kizu" version)"
+          echo "Built kizu: ${ver}"
+          case "${ver}" in
+            *"${kizu_commit}"*) ;;
+            *) echo "Expected commit ${kizu_commit} in version string: ${ver}" >&2; exit 1 ;;
+          esac
+          case "${ver}" in
+            *v0.10.0*) echo "Unexpected pinned seed version: ${ver}" >&2; exit 1 ;;
+          esac
+          echo "KIZU_OVERRIDE_BIN=${prefix}/bin/kizu" >> "$GITHUB_ENV"
+          echo "KIZU_OVERRIDE_LIB_DIR=${prefix}/lib/kizu" >> "$GITHUB_ENV"
+          echo "KIZU_COMMIT=${kizu_commit}" >> "$GITHUB_ENV"
+          echo "KIZU_SOURCE=main" >> "$GITHUB_ENV"
+
+      - name: Check effective toolchain versions
+        if: steps.prep.outputs.skip != 'true'
+        shell: bash
+        env:
+          KIZU_SOURCE: ${{ steps.prep.outputs.kizu_source }}
+        run: |
+          set -euo pipefail
           kugi exec -- just doctor
 
       - name: Run benchmark suite
@@ -123,6 +193,7 @@ jobs:
         shell: bash
         env:
           RUN_ID: ${{ steps.prep.outputs.run_id }}
+          KIZU_SOURCE: ${{ steps.prep.outputs.kizu_source }}
           KIZU_CHECKOUT: ''
           SKIP_REAL_CODE: '1'
           SKIP_VALGRIND: '1'
@@ -185,7 +256,7 @@ jobs:
           set -euo pipefail
           python3 -m json.tool docs/data.json > /dev/null
           python3 scripts/build-site-data.py --check
-          if grep -rnE '(/home/|/Users/)' results/ docs/data.json; then
+          if grep -rnE '(/home/|/Users/|/Volumes/)' results/ docs/data.json; then
             echo "Absolute local path leak detected in results/ or docs/data.json." >&2
             exit 1
           fi
