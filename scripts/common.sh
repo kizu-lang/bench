@@ -1,7 +1,26 @@
 PROGRAMS="fib sieve matmul collatz nbody binarytrees"
 VARIANTS="kizu-direct kizu-llvm rust rust-native go go-nobounds zig-safe zig-fast c-O2 c-O3native"
+ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 if [ -n "${KIZU_OVERRIDE_BIN:-}" ]; then
-  KIZU="$KIZU_OVERRIDE_BIN"
+  if [ ! -x "$KIZU_OVERRIDE_BIN" ]; then
+    echo "KIZU_OVERRIDE_BIN is not executable: $KIZU_OVERRIDE_BIN" >&2
+    exit 1
+  fi
+  kizu_override_dir=$(cd "$(dirname "$KIZU_OVERRIDE_BIN")" && pwd)
+  kizu_override_base=$(basename "$KIZU_OVERRIDE_BIN")
+  if [ "$kizu_override_base" != "kizu" ]; then
+    kizu_override_shim="$ROOT/target/kizu-override-bin"
+    mkdir -p "$kizu_override_shim"
+    ln -sf "$kizu_override_dir/$kizu_override_base" "$kizu_override_shim/kizu"
+    kizu_override_dir="$kizu_override_shim"
+  fi
+  case "${PATH:-}" in
+    "${kizu_override_dir}"|"${kizu_override_dir}":*) ;;
+    *) PATH="${kizu_override_dir}${PATH:+:${PATH}}" ;;
+  esac
+  export PATH
+  hash -r
+  KIZU="kizu"
   export KIZU
 fi
 if [ -n "${KIZU_OVERRIDE_LIB_DIR:-}" ]; then
@@ -16,7 +35,6 @@ else
   KIZU_DIRECT=0
   KIZU_LLVM=""
 fi
-ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 ONLY=${ONLY:-}
 selected() {
   [ -z "$ONLY" ] && return 0
